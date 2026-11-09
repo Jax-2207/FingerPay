@@ -1,6 +1,6 @@
 # FingerPay context map
 
-This file maps the authoritative architecture and current repository state; it is not a copy of source. **No application functionality has been implemented.** `docs/BUILD_GUIDE.md` Parts A-E is authoritative for product and technical requirements.
+This file maps the authoritative architecture and current repository state; it is not a copy of source. Phase 1 smart contract functionality is implemented and verified; later product functionality remains PLANNED. `docs/BUILD_GUIDE.md` Parts A-E is authoritative for product and technical requirements.
 
 ## PLANNED: Product and roles
 FingerPay is a closed-loop campus payment demo using CampusCoin (CPC), with no monetary guarantee. Roles are User (student), Merchant, and Admin (Campus Accounts). Students use a pre-approved PRN allowlist, a WebAuthn passkey, and an application PIN. See `docs/ai/PROJECT-BRIEF.md` and guide Parts B1-B3.
@@ -11,17 +11,17 @@ The EVM contracts are the source of truth for balances and token movements. Fire
 ## PLANNED: Data map
 Guide B8 defines PRN allowlist and user profiles; passkey public credentials; protected PIN hashes/lockout state; merchant profiles; payment intents; transactions; mints; settlements; indexer state; and admin logs. Contract token balances and payment state remain on-chain.
 
-## IMPLEMENTED: Phase 0 repository tooling
-pnpm workspaces (`contracts`, `shared`, `backend`, `frontend`), strict TypeScript configuration, ESLint/Prettier, Husky/lint-staged, root scripts, Firebase Auth/Firestore emulator configuration, safe `.env.example`, GitHub Actions CI, README setup, and one placeholder test per package plus configuration checks. Exact versions are recorded in `docs/DECISIONS.md`. Package contents are skeletons only; there are no contracts, business APIs, authentication flows, payment behavior, or product UI flows.
+## IMPLEMENTED: Phase 0 tooling and Phase 1 contracts
+Phase 0 provides pnpm workspaces (`contracts`, `shared`, `backend`, `frontend`), strict TypeScript, ESLint/Prettier, hooks, root scripts, Firebase emulator configuration, safe `.env.example`, CI and placeholder tests. Phase 1 adds CampusCoin and FingerPay contracts, Hardhat/TypeChain setup, contract tests, local deploy/seed/ABI scripts and generated ABIs under `packages/shared/src/abi/`. No backend APIs, onboarding, authentication flows, payment APIs, or product UI flows are implemented yet.
 
-## PLANNED: Product implementation stack
-Solidity, Hardhat, OpenZeppelin, TypeChain, ethers; Express, Zod, Pino, Firebase Auth/Admin, Firestore, WebAuthn, Argon2id, React/Vite/Tailwind, Hardhat tests, rules tests, and Playwright remain planned for their roadmap phases. See guide B5 and `docs/DECISIONS.md`.
+## IMPLEMENTED / PLANNED: Product implementation stack
+Solidity, Hardhat, OpenZeppelin, TypeChain and ethers are implemented for Phase 1. Express, Zod, Pino, Firebase Auth/Admin, Firestore, WebAuthn, Argon2id, React/Vite/Tailwind, rules tests and Playwright remain planned for later phases. See guide B5 and `docs/DECISIONS.md`.
 
-## PLANNED: Phase status
-Phase 0 repository scaffolding and checks are complete and signed off. Phase 1 is unblocked but has not started. Product/application features remain PLANNED. Phase roadmap and verification evidence are in `docs/PROGRESS.md` and `docs/ai/WORKTODO.md`.
+## IMPLEMENTED: Phase status
+Phase 0 and Phase 1 are complete and signed off. Phase 2 is the next planned phase; no Phase 2 or later functionality has started. Roadmap and verification evidence are in `docs/PROGRESS.md` and `docs/ai/WORKTODO.md`.
 
-## IMPLEMENTED: Repository guidance and Phase 0 tooling
-Agentic workflow/configuration and Phase 0 repository tooling exist. This does not mean product functionality is implemented. The full threat model remains planned for Phase 8; current architecture notes are in `docs/THREAT_MODEL.md`.
+## IMPLEMENTED: Repository guidance, tooling and Phase 1 contracts
+Agentic workflow/configuration, Phase 0 tooling and Phase 1 smart contracts exist. Backend and frontend product flows remain planned. The full threat model remains planned for Phase 8; current architecture notes are in `docs/THREAT_MODEL.md`.
 
 ## Canonical references
 - Technical specification: `docs/BUILD_GUIDE.md`

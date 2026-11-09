@@ -9,5 +9,10 @@ firebase-debug.log
 firestore-debug.log
 *.log
 *.tsbuildinfo
+packages/contracts/artifacts/
+packages/contracts/cache/
+packages/contracts/typechain-types/
+packages/contracts/deployments/*.json
+packages/contracts/gas-report.txt
 .DS_Store
 Thumbs.db

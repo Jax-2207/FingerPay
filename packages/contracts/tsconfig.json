@@ -1,11 +1,19 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "composite": true,
     "rootDir": ".",
-    "noEmit": true
+    "noEmit": true,
+    "types": ["node", "mocha"],
+    "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "scripts/**/*.ts",
+    "hardhat.config.ts",
+    "typechain-types/**/*.ts"
+  ]
 }

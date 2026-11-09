@@ -2,9 +2,27 @@
   "name": "@fingerpay/contracts",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "build": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "hardhat compile && tsc --noEmit -p tsconfig.json",
+    "build": "hardhat compile",
+    "test": "hardhat test test/CampusCoin.hardhat.ts test/FingerPay.hardhat.ts",
+    "node": "hardhat node",
+    "deploy": "hardhat run scripts/deploy.ts",
+    "seed": "hardhat run scripts/seed.ts",
+    "export-abi": "hardhat run scripts/export-abi.ts"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.6.1"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "3.1.3",
+    "@nomicfoundation/hardhat-network-helpers": "1.1.2",
+    "@nomicfoundation/hardhat-toolbox": "6.1.2",
+    "@types/mocha": "10.0.10",
+    "ethers": "6.17.0",
+    "hardhat": "2.29.1",
+    "hardhat-gas-reporter": "2.3.0",
+    "typescript": "5.9.3"
   }
 }

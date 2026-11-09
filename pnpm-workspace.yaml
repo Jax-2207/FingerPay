@@ -1,5 +1,8 @@
 packages:
   - packages/*
+allowBuilds:
+  keccak: true
+  secp256k1: true
 minimumReleaseAgeExclude:
   - '@rolldown/binding-android-arm-eabi@1.2.18'
   - '@rolldown/binding-android-arm64@1.2.18'
