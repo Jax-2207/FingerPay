@@ -1,3 +1,5 @@
 # Changes
 
 - 2026-11-09 | scaffold | Created docs/config scaffold to establish workflow, decisions, backlog before implementation. Files: initial scaffold commit. No app code or runtime behavior.
+- 2026-11-09 | DOC-001 | Reconciled active architecture and workflow references with authoritative BUILD_GUIDE Parts A-E; retained old ADR proposals as SUPERSEDED; established canonical root decisions, progress, and threat-model documents; refreshed living docs, specialist role instructions, and relevant skills. Phase 0 remains unimplemented and awaits user approval. See `docs/features/architecture-reconciliation/` for reviews and sign-off.
+- 2026-11-09 | PHASE-0 | Added pnpm workspace/package skeletons, strict TypeScript, lint/format/hooks, root scripts, Firebase emulator config, safe environment example, CI, setup docs, and placeholder/config tests. QA verified install, lint, typecheck, tests, build, workspace list, and diff checks on Node 22.23.4 / pnpm 12.18.0. Senior Dev, QA, Security, and Lead gates passed. Product functionality remains PLANNED.

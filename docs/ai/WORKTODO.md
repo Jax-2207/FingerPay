@@ -1,22 +1,24 @@
-# WorkTODO
+# FingerPay workTODO
 
-All backlog items **PROPOSED**.
+This backlog follows `docs/BUILD_GUIDE.md` Part D. Application functionality and phase work remain **PLANNED** until implemented and verified.
 
 ## Backlog
-- F-000 Resolve ADR-0001..0007 (roundtable, no code)
-- F-001 Project scaffold + tooling + real check.sh
-- F-002 Firebase setup, emulator, rules test harness
-- F-003 Auth + roles (User/Merchant/SuperAdmin)
-- F-004 KYC upload + SuperAdmin review
-- F-005 Wallet + simulated recharge
-- F-006 Fingerprint registration + payment
-- F-007 Hash-chained ledger + verifier
-- F-008 Transaction history + expense dashboard
-- F-009 Offers/vouchers
-- F-010 Admin analytics
+- Phase 0 — Repository, tooling, and CI. **COMPLETE**; evidence in `docs/PROGRESS.md` and `docs/features/phase-0-repository/06-signoff.md`.
+- Phase 1 — CampusCoin and FingerPay smart contracts.
+- Phase 2 — Shared schemas and backend foundation.
+- Phase 3 — PRN onboarding, approval, passkey, PIN, Firestore rules.
+- Phase 4 — Merchant onboarding, mint, payment pipeline, indexer, history, analytics.
+- Phase 5 — Refunds, settlements, circuit breaker, audit logs.
+- Phase 6 — Frontend foundation and student PWA.
+- Phase 7 — Merchant and Admin frontends.
+- Phase 8 — Hardening, security, E2E tests, full threat model.
+- Phase 9 — Testnet/demo deployment and final documentation.
+- Phase 10 — At most one optional stretch goal, only after Phases 0–9 pass.
 
 ## In progress
-- None.
+- None. Phase 1 is unblocked and has not started.
 
 ## Done
-- Documentation/config scaffold only; no feature item complete.
+- Initial repository guidance scaffold (documentation/configuration only).
+- DOC-001 architecture documentation reconciliation (documentation only; see `docs/PROGRESS.md` and `docs/ai/CHANGES.md`).
+- Phase 0 repository/tooling/CI scaffolding and verification (no product functionality; see `docs/features/phase-0-repository/06-signoff.md`).

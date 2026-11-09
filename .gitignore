@@ -8,5 +8,6 @@ build/
 firebase-debug.log
 firestore-debug.log
 *.log
+*.tsbuildinfo
 .DS_Store
 Thumbs.db

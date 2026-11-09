@@ -1,0 +1,48 @@
+{
+  "name": "fingerpay",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=22.22.1 <23"
+  },
+  "scripts": {
+    "lint": "eslint packages scripts --max-warnings 0 && prettier --check \"packages/**/*.{ts,tsx,json,html}\" \"*.{json,yml,yaml,ts,js}\"",
+    "typecheck": "tsc --noEmit -p packages/contracts/tsconfig.json && tsc --noEmit -p packages/shared/tsconfig.json && tsc --noEmit -p packages/backend/tsconfig.json && tsc --noEmit -p packages/frontend/tsconfig.json",
+    "test": "vitest run",
+    "build": "tsc --noEmit -p packages/contracts/tsconfig.json && tsc --noEmit -p packages/shared/tsconfig.json && tsc --noEmit -p packages/backend/tsconfig.json && vite build packages/frontend --config packages/frontend/vite.config.ts",
+    "dev": "vite --config packages/frontend/vite.config.ts --host 127.0.0.1 packages/frontend",
+    "emulators": "pnpm dlx firebase-tools@15.35.0 emulators:start --project demo-fingerpay --only auth,firestore",
+    "prepare": "husky",
+    "verify:config": "vitest run scripts/phase0-config.test.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.0",
+    "prettier": "3.9.10",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.1",
+    "vite": "8.3.7",
+    "vitest": "5.1.0",
+    "yaml": "2.9.1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,yml,yaml,html}": [
+      "prettier --write"
+    ]
+  }
+}
