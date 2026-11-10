@@ -1,7 +1,9 @@
 packages:
   - packages/*
 allowBuilds:
+  '@firebase/util': true
   keccak: true
+  protobufjs: true
   secp256k1: true
 minimumReleaseAgeExclude:
   - '@rolldown/binding-android-arm-eabi@1.2.18'
