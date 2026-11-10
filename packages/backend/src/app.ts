@@ -8,11 +8,14 @@ import { createErrorHandler } from './errors.js';
 import { createHttpLogger } from './logger.js';
 import type { ChainHealth } from './services/chain.js';
 import { createPhase3Router } from './routes/phase3.js';
+import { createPhase4Router } from './routes/phase4.js';
 import type { Auth } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
 import type { IdTokenVerifier } from './middleware/auth.js';
 import type { AuditLogger } from './services/audit.js';
 import type { ChainService } from './services/chain.js';
+import type { RelayerService } from './services/relayer.js';
+import { LimitsService } from './services/limits.js';
 
 export interface HealthProvider {
   getHealth(): Promise<ChainHealth>;
@@ -26,6 +29,8 @@ export interface AppDependencies {
   firestore: Firestore;
   tokenVerifier: IdTokenVerifier;
   audit: AuditLogger;
+  relayer?: RelayerService;
+  limits?: LimitsService;
 }
 
 export function createApp({
@@ -36,6 +41,8 @@ export function createApp({
   firestore,
   tokenVerifier,
   audit,
+  relayer,
+  limits,
 }: AppDependencies): Express {
   const app = express();
   const allowedOrigins = new Set(config.CORS_ORIGINS);
@@ -81,6 +88,23 @@ export function createApp({
     '/api',
     createPhase3Router({ auth, firestore, verifier: tokenVerifier, chain, audit, config }),
   );
+
+  if (relayer !== undefined) {
+    const limitsService = limits ?? new LimitsService(firestore, config);
+    app.use(
+      '/api',
+      createPhase4Router({
+        auth,
+        firestore,
+        verifier: tokenVerifier,
+        chain: chain as ChainService,
+        relayer,
+        limits: limitsService,
+        audit,
+        config,
+      }),
+    );
+  }
 
   app.use(createErrorHandler(logger));
   return app;

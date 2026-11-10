@@ -27,12 +27,19 @@ const EnvironmentSchema = z
     RPC_URL: z.url(),
     CHAIN_ID: z.coerce.number().int().positive().safe(),
     RELAYER_PRIVATE_KEY: z.string().regex(/^0x[0-9a-fA-F]{64}$/),
+    ADMIN_PRIVATE_KEY: z
+      .string()
+      .regex(/^0x[0-9a-fA-F]{64}$/)
+      .optional(),
     FINGERPAY_ADDRESS: EvmAddressSchema,
     CAMPUSCOIN_ADDRESS: EvmAddressSchema,
     WALLET_SALT: z.string().min(32),
     WEBAUTHN_RP_ID: z.string().trim().min(1),
     WEBAUTHN_RP_NAME: z.string().trim().min(1).max(64),
     WEBAUTHN_ORIGIN: z.url(),
+    MAX_PAYMENT_CPC: z.coerce.number().int().positive().default(200),
+    DAILY_LIMIT_CPC: z.coerce.number().int().positive().default(500),
+    INTENT_TTL_SECONDS: z.coerce.number().int().positive().default(120),
   })
   .superRefine((config, context) => {
     if (Boolean(config.FIREBASE_CLIENT_EMAIL) !== Boolean(config.FIREBASE_PRIVATE_KEY)) {

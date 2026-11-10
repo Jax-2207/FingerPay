@@ -17,7 +17,8 @@
     "prepare": "husky",
     "verify:config": "vitest run scripts/phase0-config.test.ts",
     "test:phase2": "vitest run packages/shared/test packages/backend/test && node scripts/phase2-integration.mjs",
-    "test:phase3": "node scripts/phase3-integration.mjs"
+    "test:phase3": "node scripts/phase3-integration.mjs",
+    "test:phase4": "node scripts/phase4-integration.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

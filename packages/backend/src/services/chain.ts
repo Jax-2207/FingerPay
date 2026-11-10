@@ -52,6 +52,27 @@ export class ChainService {
     return result;
   }
 
+  async isMerchantActive(address: string): Promise<boolean> {
+    const validatedAddress = EvmAddressSchema.parse(address);
+    const result: unknown = await this.fingerPay
+      .getFunction('merchantActive')
+      .staticCall(validatedAddress);
+    return Boolean(result);
+  }
+
+  async isMerchantRegistered(address: string): Promise<boolean> {
+    const validatedAddress = EvmAddressSchema.parse(address);
+    const result: unknown = await this.fingerPay
+      .getFunction('merchantRegistered')
+      .staticCall(validatedAddress);
+    return Boolean(result);
+  }
+
+  async isIntentUsed(intentId: string): Promise<boolean> {
+    const result: unknown = await this.fingerPay.getFunction('intentUsed').staticCall(intentId);
+    return Boolean(result);
+  }
+
   decodeCustomError(error: unknown): string | undefined {
     const data = findErrorData(error);
     if (data === undefined) return undefined;

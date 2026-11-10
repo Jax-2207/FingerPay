@@ -1,5 +1,5 @@
 import { execFileSync, spawn } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -136,10 +136,13 @@ try {
   );
 
   console.log(`Emulators ready. Running Phase 3 test suites...`);
-  await run(['test', 'packages/backend/test/phase3.test.ts', 'packages/backend/test/phase3.rules.test.ts'], {
-    FIRESTORE_EMULATOR_HOST: `127.0.0.1:${firestorePort}`,
-    FIREBASE_AUTH_EMULATOR_HOST: `127.0.0.1:${authPort}`,
-  });
+  await run(
+    ['test', 'packages/backend/test/phase3.test.ts', 'packages/backend/test/phase3.rules.test.ts'],
+    {
+      FIRESTORE_EMULATOR_HOST: `127.0.0.1:${firestorePort}`,
+      FIREBASE_AUTH_EMULATOR_HOST: `127.0.0.1:${authPort}`,
+    },
+  );
   console.log('Phase 3 tests passed successfully.');
 } catch (error) {
   console.error(error instanceof Error ? error.message : 'Phase 3 integration failed');
