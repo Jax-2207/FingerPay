@@ -11,14 +11,14 @@ This backlog follows `docs/BUILD_GUIDE.md` Part D. Phase status reflects complet
 - Phase 4 — Merchant onboarding, mint, payment pipeline, indexer, history, analytics. **COMPLETE**; evidence in `docs/PROGRESS.md`.
 - Phase 5 — Refunds, settlements, circuit breaker, audit logs. **COMPLETE**; evidence in `docs/PROGRESS.md`.
 - Phase 6 — Frontend foundation and student PWA. **COMPLETE**; evidence in `docs/PROGRESS.md`.
-- Phase 7 — Merchant and Admin frontends.
+- Phase 7 — Merchant and Admin frontends. **COMPLETE**; evidence in `docs/PROGRESS.md`.
 - Phase 8 — Hardening, security, E2E tests, full threat model.
 - Phase 9 — Testnet/demo deployment and final documentation.
 - Phase 10 — At most one optional stretch goal, only after Phases 0–9 pass.
 
 ## In progress
 
-- None. Phase 7 is next.
+- None. Phase 8 is next.
 
 ## Done
 

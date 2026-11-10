@@ -12,6 +12,7 @@ import { api, type StudentProfile, formatErrorMessage } from '../api.js';
 interface AuthContextType {
   user: User | null;
   profile: StudentProfile | null;
+  role: string | null;
   loading: boolean;
   refreshProfile: () => Promise<void>;
   logout: () => Promise<void>;
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,13 +36,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async () => {
     if (!auth.currentUser) {
       setProfile(null);
+      setRole(null);
       return;
     }
     try {
-      const data = await api.getMe();
-      setProfile(data);
+      const tokenResult = await auth.currentUser.getIdTokenResult(true);
+      const claimRole = (tokenResult.claims.role as string | undefined) ?? null;
+      setRole(claimRole);
+
+      if (claimRole === 'user' || !claimRole) {
+        const data = await api.getMe();
+        setProfile(data);
+        if (data.role) setRole(data.role);
+      }
     } catch {
-      // Profile might not exist yet if signup-profile hasn't completed or pending
       setProfile(null);
     }
   }, []);
@@ -50,13 +59,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(currentUser);
       if (currentUser) {
         try {
-          const data = await api.getMe();
-          setProfile(data);
+          const tokenResult = await currentUser.getIdTokenResult();
+          const claimRole = (tokenResult.claims.role as string | undefined) ?? null;
+          setRole(claimRole);
+
+          if (claimRole === 'user' || !claimRole) {
+            const data = await api.getMe();
+            setProfile(data);
+            if (data.role) setRole(data.role);
+          }
         } catch {
           setProfile(null);
         }
       } else {
         setProfile(null);
+        setRole(null);
       }
       setLoading(false);
     });
@@ -100,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         profile,
+        role,
         loading,
         refreshProfile,
         logout,

@@ -41,6 +41,7 @@ describe('Student Application Pages and Workflows', () => {
     vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
       user: { uid: 'user-101' } as never,
       profile: mockProfile,
+      role: 'user',
       loading: false,
       refreshProfile: mockRefreshProfile,
       logout: mockLogout,

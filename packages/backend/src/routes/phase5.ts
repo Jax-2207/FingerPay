@@ -67,7 +67,7 @@ function parseBody<T>(schema: z.ZodType<T>, value: unknown): T {
 }
 
 export function createPhase5Router(deps: Phase5Dependencies): Router {
-  const { firestore: db, verifier, chain, relayer, audit } = deps;
+  const { firestore: db, verifier, chain, relayer, audit, config } = deps;
   const router = Router();
   const authenticated = requireAuthentication(verifier);
   const adminOnly = [authenticated, requireRole('admin')];
@@ -463,6 +463,67 @@ export function createPhase5Router(deps: Phase5Dependencies): Router {
       }));
 
       response.json({ logs });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/admin/chain', ...adminOnly, async (_request, response, next) => {
+    try {
+      const paused = typeof chain.isPaused === 'function' ? await chain.isPaused() : false;
+      const eventsSnap = await db
+        .collection('indexedEvents')
+        .orderBy('blockNumber', 'desc')
+        .limit(20)
+        .get();
+      const events = eventsSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      response.json({
+        fingerPayAddress: config.FINGERPAY_ADDRESS,
+        campusCoinAddress: config.CAMPUSCOIN_ADDRESS,
+        chainId: config.CHAIN_ID,
+        paused,
+        recentEvents: events,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/admin/stats', ...adminOnly, async (_request, response, next) => {
+    try {
+      const [usersSnap, merchantsSnap, txSnap, settlementsSnap, paused] = await Promise.all([
+        db.collection('users').get(),
+        db.collection('merchants').get(),
+        db.collection('transactions').get(),
+        db.collection('settlements').get(),
+        typeof chain.isPaused === 'function' ? chain.isPaused() : Promise.resolve(false),
+      ]);
+
+      const totalSpent = txSnap.docs
+        .filter((d) => d.get('status') === 'confirmed')
+        .reduce((sum, d) => sum + (Number(d.get('amount')) || 0), 0);
+
+      const pendingSettlements = settlementsSnap.docs.filter(
+        (d) => d.get('status') === 'requested',
+      ).length;
+
+      const pendingUsers = usersSnap.docs.filter((d) => d.get('status') === 'pending').length;
+
+      response.json({
+        totalUsers: usersSnap.size,
+        pendingUsers,
+        totalMerchants: merchantsSnap.size,
+        activeMerchants: merchantsSnap.docs.filter((d) => d.get('status') === 'approved').length,
+        totalTransactions: txSnap.size,
+        totalSpentCpc: totalSpent,
+        totalSettlements: settlementsSnap.size,
+        pendingSettlements,
+        paused,
+      });
     } catch (error) {
       next(error);
     }

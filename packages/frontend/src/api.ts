@@ -128,6 +128,68 @@ export interface SpendingAnalytics {
   totalsByDay: Record<string, number>;
 }
 
+export interface MerchantProfile {
+  uid: string;
+  shopName: string;
+  category: string;
+  walletAddress: string;
+  status: 'pending' | 'approved' | 'rejected';
+  active: boolean;
+  balance: string;
+  createdAt?: string;
+}
+
+export interface SettlementRecord {
+  id: string;
+  merchantUid: string;
+  merchantAddress: string;
+  amount: string;
+  status: 'requested' | 'approved' | 'rejected' | 'paid';
+  settlementRef?: string;
+  txHash?: string;
+  externalReference?: string;
+  rejectionReason?: string;
+  createdAt?: unknown;
+}
+
+export interface AdminUserRecord {
+  uid: string;
+  name: string;
+  email: string | null;
+  prn: string;
+  role: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt?: string;
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  pendingUsers: number;
+  totalMerchants: number;
+  activeMerchants: number;
+  totalTransactions: number;
+  totalSpentCpc: number;
+  totalSettlements: number;
+  pendingSettlements: number;
+  paused: boolean;
+}
+
+export interface AdminChainInfo {
+  fingerPayAddress: string;
+  campusCoinAddress: string;
+  chainId: number;
+  paused: boolean;
+  recentEvents: Array<Record<string, unknown>>;
+}
+
+export interface AdminLogRecord {
+  id: string;
+  actorUid: string;
+  action: string;
+  meta: Record<string, unknown>;
+  createdAt?: unknown;
+}
+
 export const api = {
   async getMe(): Promise<StudentProfile> {
     const res = await fetchWithAuth('/me');
@@ -205,5 +267,198 @@ export const api = {
   async getSpendingAnalytics(): Promise<SpendingAnalytics> {
     const res = await fetchWithAuth('/analytics/spending');
     return (await res.json()) as SpendingAnalytics;
+  },
+
+  // Merchant APIs
+  async applyMerchant(input: { shopName: string; category?: string }): Promise<{ status: string }> {
+    const res = await fetchWithAuth('/merchant/apply', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    return (await res.json()) as { status: string };
+  },
+
+  async getMerchantProfile(): Promise<MerchantProfile> {
+    const res = await fetchWithAuth('/merchant/profile');
+    return (await res.json()) as MerchantProfile;
+  },
+
+  async createIntent(input: { amount: string | number; category?: string }): Promise<{
+    id: string;
+    intentId: string;
+    amount: string;
+    expiry: number;
+    nonce: string;
+    qrPayload: string;
+  }> {
+    const res = await fetchWithAuth('/intents', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    return (await res.json()) as {
+      id: string;
+      intentId: string;
+      amount: string;
+      expiry: number;
+      nonce: string;
+      qrPayload: string;
+    };
+  },
+
+  async cancelIntent(intentId: string): Promise<{ status: string }> {
+    const res = await fetchWithAuth(`/intents/${encodeURIComponent(intentId)}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    return (await res.json()) as { status: string };
+  },
+
+  async requestSettlement(
+    amount: string | number,
+  ): Promise<{ id: string; status: string; amount: string }> {
+    const res = await fetchWithAuth('/settlements', {
+      method: 'POST',
+      body: JSON.stringify({ amount }),
+    });
+    return (await res.json()) as { id: string; status: string; amount: string };
+  },
+
+  async getSettlements(): Promise<{ settlements: SettlementRecord[] }> {
+    const res = await fetchWithAuth('/settlements');
+    return (await res.json()) as { settlements: SettlementRecord[] };
+  },
+
+  // Admin APIs
+  async getAdminStats(): Promise<AdminStats> {
+    const res = await fetchWithAuth('/admin/stats');
+    return (await res.json()) as AdminStats;
+  },
+
+  async getAdminUsers(status?: string): Promise<{ users: AdminUserRecord[] }> {
+    const query = status ? `?status=${encodeURIComponent(status)}` : '';
+    const res = await fetchWithAuth(`/admin/users${query}`);
+    return (await res.json()) as { users: AdminUserRecord[] };
+  },
+
+  async decideAdminUser(uid: string, decision: 'approve' | 'reject'): Promise<{ status: string }> {
+    const res = await fetchWithAuth(`/admin/users/${encodeURIComponent(uid)}/decision`, {
+      method: 'POST',
+      body: JSON.stringify({ decision }),
+    });
+    return (await res.json()) as { status: string };
+  },
+
+  async importPrns(records: Array<{ prn: string; name: string }>): Promise<{ imported: number }> {
+    const res = await fetchWithAuth('/admin/prn/import', {
+      method: 'POST',
+      body: JSON.stringify({ records }),
+    });
+    return (await res.json()) as { imported: number };
+  },
+
+  async getAdminMerchants(): Promise<{ merchants: MerchantProfile[] }> {
+    const res = await fetchWithAuth('/admin/merchants');
+    return (await res.json()) as { merchants: MerchantProfile[] };
+  },
+
+  async decideAdminMerchant(
+    uid: string,
+    decision: 'approve' | 'reject',
+  ): Promise<{ status: string; txHash?: string }> {
+    const res = await fetchWithAuth(`/admin/merchants/${encodeURIComponent(uid)}/decision`, {
+      method: 'POST',
+      body: JSON.stringify({ decision }),
+    });
+    return (await res.json()) as { status: string; txHash?: string };
+  },
+
+  async deactivateMerchant(uid: string): Promise<{ status: string; txHash: string }> {
+    const res = await fetchWithAuth(`/admin/merchants/${encodeURIComponent(uid)}/deactivate`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    return (await res.json()) as { status: string; txHash: string };
+  },
+
+  async activateMerchant(uid: string): Promise<{ status: string; txHash: string }> {
+    const res = await fetchWithAuth(`/admin/merchants/${encodeURIComponent(uid)}/activate`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    return (await res.json()) as { status: string; txHash: string };
+  },
+
+  async adminMint(input: {
+    prn: string;
+    amount: string | number;
+    receiptRef: string;
+  }): Promise<{ status: string; txHash: string; studentWallet: string }> {
+    const res = await fetchWithAuth('/admin/mint', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    return (await res.json()) as { status: string; txHash: string; studentWallet: string };
+  },
+
+  async adminRefund(input: { intentId: string }): Promise<{ status: string; txHash: string }> {
+    const res = await fetchWithAuth('/admin/refund', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    return (await res.json()) as { status: string; txHash: string };
+  },
+
+  async getAdminSettlements(): Promise<{ settlements: SettlementRecord[] }> {
+    const res = await fetchWithAuth('/admin/settlements');
+    return (await res.json()) as { settlements: SettlementRecord[] };
+  },
+
+  async decideAdminSettlement(
+    id: string,
+    decision: 'approve' | 'reject',
+    rejectionReason?: string,
+  ): Promise<{ status: string; txHash?: string }> {
+    const res = await fetchWithAuth(`/admin/settlements/${encodeURIComponent(id)}/decision`, {
+      method: 'POST',
+      body: JSON.stringify({ decision, rejectionReason }),
+    });
+    return (await res.json()) as { status: string; txHash?: string };
+  },
+
+  async markSettlementPaid(
+    id: string,
+    externalReference: string,
+  ): Promise<{ status: string; externalReference: string }> {
+    const res = await fetchWithAuth(`/admin/settlements/${encodeURIComponent(id)}/mark-paid`, {
+      method: 'POST',
+      body: JSON.stringify({ externalReference }),
+    });
+    return (await res.json()) as { status: string; externalReference: string };
+  },
+
+  async getAdminChain(): Promise<AdminChainInfo> {
+    const res = await fetchWithAuth('/admin/chain');
+    return (await res.json()) as AdminChainInfo;
+  },
+
+  async adminPause(): Promise<{ status: string; txHash: string }> {
+    const res = await fetchWithAuth('/admin/pause', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    return (await res.json()) as { status: string; txHash: string };
+  },
+
+  async adminUnpause(): Promise<{ status: string; txHash: string }> {
+    const res = await fetchWithAuth('/admin/unpause', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    return (await res.json()) as { status: string; txHash: string };
+  },
+
+  async getAdminLogs(limit = 50): Promise<{ logs: AdminLogRecord[] }> {
+    const res = await fetchWithAuth(`/admin/logs?limit=${limit}`);
+    return (await res.json()) as { logs: AdminLogRecord[] };
   },
 };
