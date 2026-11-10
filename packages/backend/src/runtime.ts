@@ -14,6 +14,14 @@ export function createRuntime(config: AppConfig) {
   const chain = new ChainService(config);
   const relayer = new RelayerService(config, chain.provider);
   const audit = new AuditLogger(firebase.firestore, logger);
-  const app = createApp({ config, chain, logger });
+  const app = createApp({
+    config,
+    chain,
+    logger,
+    auth: firebase.auth,
+    firestore: firebase.firestore,
+    tokenVerifier,
+    audit,
+  });
   return { app, audit, chain, firebase, logger, relayer, tokenVerifier };
 }

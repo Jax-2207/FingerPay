@@ -30,6 +30,9 @@ const EnvironmentSchema = z
     FINGERPAY_ADDRESS: EvmAddressSchema,
     CAMPUSCOIN_ADDRESS: EvmAddressSchema,
     WALLET_SALT: z.string().min(32),
+    WEBAUTHN_RP_ID: z.string().trim().min(1),
+    WEBAUTHN_RP_NAME: z.string().trim().min(1).max(64),
+    WEBAUTHN_ORIGIN: z.url(),
   })
   .superRefine((config, context) => {
     if (Boolean(config.FIREBASE_CLIENT_EMAIL) !== Boolean(config.FIREBASE_PRIVATE_KEY)) {
@@ -45,6 +48,23 @@ const EnvironmentSchema = z
         code: 'custom',
         path: ['RPC_URL'],
         message: 'RPC_URL must use HTTP or HTTPS',
+      });
+    }
+    const webAuthnOrigin = new URL(config.WEBAUTHN_ORIGIN);
+    const rpMatchesOrigin =
+      webAuthnOrigin.hostname === config.WEBAUTHN_RP_ID ||
+      webAuthnOrigin.hostname.endsWith(`.${config.WEBAUTHN_RP_ID}`);
+    if (
+      webAuthnOrigin.pathname !== '/' ||
+      webAuthnOrigin.search !== '' ||
+      webAuthnOrigin.hash !== '' ||
+      !rpMatchesOrigin ||
+      (webAuthnOrigin.protocol !== 'https:' && webAuthnOrigin.hostname !== 'localhost')
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['WEBAUTHN_ORIGIN'],
+        message: 'WEBAUTHN_ORIGIN must be a secure origin valid for WEBAUTHN_RP_ID',
       });
     }
   });

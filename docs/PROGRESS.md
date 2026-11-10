@@ -1,14 +1,14 @@
 # FingerPay phase progress
 
-Phases 0–2 are complete. Phase 3 and later application functionality remains **PLANNED**. This file is the canonical phase-level status record.
+Phases 0–3 are complete. Phase 4 and later application functionality remains **PLANNED**. This file is the canonical phase-level status record.
 
 | Phase | Status | Evidence / next gate |
 |---|---|---|
 | 0 — Repository, tooling, and CI | COMPLETE | All Phase 0 acceptance criteria and workflow gates passed. Required commands pass on Node 22.23.4 / pnpm 12.18.0. See `docs/features/phase-0-repository/06-signoff.md`; release commit and `phase-0` tag are created after this record. |
 | 1 — Smart contracts | COMPLETE | CampusCoin/FingerPay, tests, scripts and shared ABIs verified. See `docs/features/phase-1-smart-contracts/06-signoff.md`; `phase-1` tag follows the approved signoff commit. |
 | 2 — Shared package and backend foundation | COMPLETE | Implementation commit `8da7f032a292131eb5d41b5262ac78e12b56d981`. Phase 2 tests, integration, root checks, Senior Developer, QA, Security Reviewer, and Lead sign-off passed; see Phase 2 verification below. |
-| 3 — PRN onboarding, approval, passkey, PIN | PLANNED | Phase 2 sign-off required. |
-| 4 — Merchants, mint, payment pipeline | PLANNED | Phase 3 sign-off required. |
+| 3 — PRN onboarding, approval, passkey, PIN | COMPLETE | PRN allowlist, student onboarding, passkey registration, PIN Argon2id hashing & lockout, Firestore rules verified; see Phase 3 verification below. |
+| 4 — Merchants, mint, payment pipeline | PLANNED | Phase 3 sign-off complete. |
 | 5 — Refunds, settlements, circuit breaker | PLANNED | Phase 4 sign-off required. |
 | 6 — Student frontend | PLANNED | Phase 5 sign-off required. |
 | 7 — Merchant and Admin frontends | PLANNED | Phase 6 sign-off required. |
@@ -17,6 +17,14 @@ Phases 0–2 are complete. Phase 3 and later application functionality remains *
 | 10 — Optional stretch | PLANNED / OPTIONAL | Only after Phases 0–9 pass; at most one goal. |
 
 Phase 0 contains repository scaffolding. Phase 1 contracts and Phase 2 shared/backend foundations are implemented. Phase 3 and later product functionality remains PLANNED. Phase 0–2 release commits and tags are recorded in this progress file and their completion evidence.
+
+## Phase 3 verification
+
+- Lead sign-off: **APPROVED** — PRN allowlist import (JSON and CSV), student profile onboarding, admin decision workflow, WebAuthn passkey registration/authentication, Argon2id PIN hashing with 5-attempt lockout, and client-write blocking Firestore rules verified.
+- Senior Developer: **APPROVED** — verified clean role checks, secure Argon2id parameters, challenge binding, rate limiting, and zero exposure of secrets.
+- QA: **PASS** — `corepack pnpm test:phase3` passes 7/7 tests (unit and emulator integration). All tests in `packages/backend/test/phase3.test.ts`, `packages/backend/test/phase3.rules.test.ts`, and `packages/backend/test/phase3.webauthn.test.ts` pass.
+- Security Reviewer: **PASS** — passkey challenges bound to credential owner; Argon2id lockout prevents brute-force; Firestore security rules prevent client writes to profiles, passkeys, pinSecrets, and allowlists.
+- Root checks: `corepack pnpm lint` **PASS**; `corepack pnpm typecheck` **PASS**; `corepack pnpm test` **PASS**; `corepack pnpm test:phase2` **PASS**; `corepack pnpm test:phase3` **PASS**.
 
 ## Phase 2 verification
 

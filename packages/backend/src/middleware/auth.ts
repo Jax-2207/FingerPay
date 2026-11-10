@@ -6,6 +6,7 @@ import { HttpError } from '../errors.js';
 export interface VerifiedToken {
   uid: string;
   role?: unknown;
+  authTime?: number;
 }
 
 export interface IdTokenVerifier {
@@ -17,13 +18,14 @@ export class FirebaseIdTokenVerifier implements IdTokenVerifier {
 
   async verifyIdToken(token: string): Promise<VerifiedToken> {
     const claims = await this.auth.verifyIdToken(token);
-    return { uid: claims.uid, role: claims.role };
+    return { uid: claims.uid, role: claims.role, authTime: claims.auth_time };
   }
 }
 
 export interface AuthenticatedUser {
   uid: string;
   role?: AppRole;
+  authTime?: number;
 }
 
 export function requireAuthentication(verifier: IdTokenVerifier): RequestHandler {
@@ -45,7 +47,11 @@ export function requireAuthentication(verifier: IdTokenVerifier): RequestHandler
 
       const role = AppRoleSchema.safeParse(claims.role);
       const localState = response.locals as Record<string, unknown>;
-      localState.auth = role.success ? { uid: claims.uid, role: role.data } : { uid: claims.uid };
+      localState.auth = {
+        uid: claims.uid,
+        ...(role.success ? { role: role.data } : {}),
+        ...(claims.authTime === undefined ? {} : { authTime: claims.authTime }),
+      };
       next();
     } catch {
       next(new HttpError(401, API_ERROR_CODES.unauthorized, 'Invalid authentication token'));

@@ -190,6 +190,9 @@ try {
     FINGERPAY_ADDRESS: deployment.contracts.fingerPay,
     CAMPUSCOIN_ADDRESS: deployment.contracts.campusCoin,
     WALLET_SALT: 'phase-two-local-only-wallet-salt-1234567890',
+    WEBAUTHN_RP_ID: 'localhost',
+    WEBAUTHN_RP_NAME: 'FingerPay',
+    WEBAUTHN_ORIGIN: 'http://localhost:5173',
   });
   await waitFor(
     'backend health endpoint',

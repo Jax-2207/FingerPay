@@ -7,6 +7,12 @@ import type { AppConfig } from './config.js';
 import { createErrorHandler } from './errors.js';
 import { createHttpLogger } from './logger.js';
 import type { ChainHealth } from './services/chain.js';
+import { createPhase3Router } from './routes/phase3.js';
+import type { Auth } from 'firebase-admin/auth';
+import type { Firestore } from 'firebase-admin/firestore';
+import type { IdTokenVerifier } from './middleware/auth.js';
+import type { AuditLogger } from './services/audit.js';
+import type { ChainService } from './services/chain.js';
 
 export interface HealthProvider {
   getHealth(): Promise<ChainHealth>;
@@ -14,11 +20,23 @@ export interface HealthProvider {
 
 export interface AppDependencies {
   config: AppConfig;
-  chain: HealthProvider;
+  chain: HealthProvider & Pick<ChainService, 'getTokenBalance'>;
   logger: Logger;
+  auth: Auth;
+  firestore: Firestore;
+  tokenVerifier: IdTokenVerifier;
+  audit: AuditLogger;
 }
 
-export function createApp({ config, chain, logger }: AppDependencies): Express {
+export function createApp({
+  config,
+  chain,
+  logger,
+  auth,
+  firestore,
+  tokenVerifier,
+  audit,
+}: AppDependencies): Express {
   const app = express();
   const allowedOrigins = new Set(config.CORS_ORIGINS);
 
@@ -36,6 +54,7 @@ export function createApp({ config, chain, logger }: AppDependencies): Express {
       credentials: false,
     }),
   );
+  app.use('/api/admin/prn/import', express.text({ type: 'text/csv', limit: MAX_JSON_BODY_BYTES }));
   app.use(express.json({ limit: MAX_JSON_BODY_BYTES }));
   app.use(createHttpLogger(logger));
 
@@ -57,6 +76,11 @@ export function createApp({ config, chain, logger }: AppDependencies): Express {
       });
     }
   });
+
+  app.use(
+    '/api',
+    createPhase3Router({ auth, firestore, verifier: tokenVerifier, chain, audit, config }),
+  );
 
   app.use(createErrorHandler(logger));
   return app;

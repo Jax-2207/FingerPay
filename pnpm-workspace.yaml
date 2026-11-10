@@ -1,6 +1,7 @@
 packages:
   - packages/*
 allowBuilds:
+  argon2: true
   '@firebase/util': true
   keccak: true
   protobufjs: true

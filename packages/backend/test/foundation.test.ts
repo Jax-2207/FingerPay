@@ -13,6 +13,7 @@ import {
 } from '../src/middleware/auth.js';
 import { SerialRelayerQueue } from '../src/services/relayer.js';
 import { deriveWalletAddress } from '../src/services/wallet.js';
+import { isTrivialPin } from '../src/routes/phase3.js';
 
 const validEnvironment = {
   FIREBASE_PROJECT_ID: 'demo-fingerpay',
@@ -23,6 +24,9 @@ const validEnvironment = {
   FINGERPAY_ADDRESS: '0x0000000000000000000000000000000000000001',
   CAMPUSCOIN_ADDRESS: '0x0000000000000000000000000000000000000002',
   WALLET_SALT: 'a-secure-local-wallet-salt-value-123456',
+  WEBAUTHN_RP_ID: 'localhost',
+  WEBAUTHN_RP_NAME: 'FingerPay Demo',
+  WEBAUTHN_ORIGIN: 'http://localhost:5173',
   NODE_ENV: 'test',
 };
 
@@ -59,7 +63,14 @@ describe('Phase 2 backend foundation', () => {
     const config = loadConfig(validEnvironment);
     const app = createApp({
       config,
-      chain: { getHealth: async () => ({ connected: true, chainId: '31337' }) },
+      chain: {
+        getHealth: async () => ({ connected: true, chainId: '31337' }),
+        getTokenBalance: async () => 0n,
+      },
+      auth: {} as never,
+      firestore: {} as never,
+      tokenVerifier: { verifyIdToken: async () => ({ uid: 'test' }) },
+      audit: { write: async () => undefined } as never,
       logger: pino({ level: 'silent' }),
     });
     const response = await fetch(`${await listen(app)}/health`);
@@ -68,6 +79,27 @@ describe('Phase 2 backend foundation', () => {
       status: 'ok',
       blockchain: { connected: true, chainId: '31337' },
     });
+  });
+
+  it('rejects a WebAuthn RP ID that does not match the configured origin', () => {
+    expect(() => loadConfig({ ...validEnvironment, WEBAUTHN_RP_ID: 'attacker.example' })).toThrow(
+      ConfigurationError,
+    );
+  });
+
+  it('fails configuration when required WebAuthn environment variables are missing', () => {
+    const missingRpId = Object.fromEntries(
+      Object.entries(validEnvironment).filter(([key]) => key !== 'WEBAUTHN_RP_ID'),
+    );
+    expect(() => loadConfig(missingRpId)).toThrow(ConfigurationError);
+  });
+
+  it('rejects repeated and sequential PINs across the supported lengths', () => {
+    expect(isTrivialPin('0000')).toBe(true);
+    expect(isTrivialPin('1234')).toBe(true);
+    expect(isTrivialPin('12345')).toBe(true);
+    expect(isTrivialPin('654321')).toBe(true);
+    expect(isTrivialPin('4682')).toBe(false);
   });
 
   it('rejects missing and invalid tokens, denies the wrong role, and accepts an authorized role', async () => {
