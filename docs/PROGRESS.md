@@ -1,12 +1,12 @@
 # FingerPay phase progress
 
-Phase 0 tooling and Phase 1 smart contracts are complete. Later application functionality remains **PLANNED**. This file is the canonical phase-level status record.
+Phases 0–2 are complete. Phase 3 and later application functionality remains **PLANNED**. This file is the canonical phase-level status record.
 
 | Phase | Status | Evidence / next gate |
 |---|---|---|
 | 0 — Repository, tooling, and CI | COMPLETE | All Phase 0 acceptance criteria and workflow gates passed. Required commands pass on Node 22.23.4 / pnpm 12.18.0. See `docs/features/phase-0-repository/06-signoff.md`; release commit and `phase-0` tag are created after this record. |
 | 1 — Smart contracts | COMPLETE | CampusCoin/FingerPay, tests, scripts and shared ABIs verified. See `docs/features/phase-1-smart-contracts/06-signoff.md`; `phase-1` tag follows the approved signoff commit. |
-| 2 — Shared package and backend foundation | PLANNED | Phase 1 sign-off required. |
+| 2 — Shared package and backend foundation | COMPLETE | Implementation commit `8da7f032a292131eb5d41b5262ac78e12b56d981`. Phase 2 tests, integration, root checks, Senior Developer, QA, Security Reviewer, and Lead sign-off passed; see Phase 2 verification below. |
 | 3 — PRN onboarding, approval, passkey, PIN | PLANNED | Phase 2 sign-off required. |
 | 4 — Merchants, mint, payment pipeline | PLANNED | Phase 3 sign-off required. |
 | 5 — Refunds, settlements, circuit breaker | PLANNED | Phase 4 sign-off required. |
@@ -16,7 +16,17 @@ Phase 0 tooling and Phase 1 smart contracts are complete. Later application func
 | 9 — Testnet/demo and final docs | PLANNED | Phase 8 sign-off required. |
 | 10 — Optional stretch | PLANNED / OPTIONAL | Only after Phases 0–9 pass; at most one goal. |
 
-Phase 0 contains repository scaffolding. Phase 1 contract functionality is implemented; shared/backend/frontend product functionality remains PLANNED. Phase 0 and Phase 1 release commits and tags are recorded in their signoff documents and final completion reports.
+Phase 0 contains repository scaffolding. Phase 1 contracts and Phase 2 shared/backend foundations are implemented. Phase 3 and later product functionality remains PLANNED. Phase 0–2 release commits and tags are recorded in this progress file and their completion evidence.
+
+## Phase 2 verification
+
+- Lead sign-off: **APPROVED** — Phase 2 scope and acceptance criteria are satisfied; no Phase 3 work was included.
+- Senior Developer: **APPROVED** implementation and final audit metadata allowlist.
+- QA: **PASS** — `corepack pnpm test:phase2`; 5 test files, 10 tests. Local Hardhat deployment confirmed shared `computeIntentId` matches the contract result; Firebase Auth and Firestore emulators started; live `/health` reported `ok` with blockchain connected.
+- Security Reviewer: **PASS** after audit metadata was restricted to typed operational fields.
+- Root checks: `corepack pnpm lint` **PASS**; `corepack pnpm typecheck` **PASS**; `corepack pnpm test` **PASS** (8 files, 14 tests).
+- Known verification gap: the integration harness starts Firebase emulators but does not exercise real emulator ID-token verification or audit writes. The Phase 2 acceptance tests for token rejection/authorization and audit metadata validation passed.
+- Release: implementation commit `8da7f032a292131eb5d41b5262ac78e12b56d981`; the annotated `phase-2` tag targets this implementation commit.
 
 ## Phase 1 gas measurements
 
