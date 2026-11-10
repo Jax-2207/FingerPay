@@ -5,6 +5,8 @@ build/
 .env.*
 !.env.example
 .firebase/
+*-adminsdk-*.json
+*service-account*.json
 firebase-debug.log
 firestore-debug.log
 *.log

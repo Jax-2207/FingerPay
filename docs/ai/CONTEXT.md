@@ -24,11 +24,11 @@ Solidity, Hardhat, OpenZeppelin, TypeChain and ethers are implemented for Phase 
 
 ## IMPLEMENTED: Phase status
 
-Phases 0, 1, 2, 3, 4, 5, 6, 7, and 8 are complete and signed off. Phase 9 (Testnet deployment, demo mode, and documentation) is the next planned phase. Roadmap and verification evidence are in `docs/PROGRESS.md` and `docs/ai/WORKTODO.md`.
+Phases 0, 1, 2, 3, 4, 5, 6, 7, 8, and 9 are complete and signed off. Phase 10 optional stretch goal remains PLANNED / OPTIONAL. Roadmap and verification evidence are in `docs/PROGRESS.md` and `docs/ai/WORKTODO.md`.
 
-## IMPLEMENTED: Repository guidance, tooling, contracts, onboarding, payment pipeline, contract controls, frontends, security hardening & threat model
+## IMPLEMENTED: Repository guidance, tooling, contracts, onboarding, payment pipeline, contract controls, frontends, security hardening, demo & documentation
 
-Agentic workflow/configuration, Phase 0 tooling, Phase 1 smart contracts, Phase 2 shared schemas/backend foundation, Phase 3 student onboarding/passkeys/PIN, Phase 4 merchant management, minting, payment authorization pipeline, blockchain indexer, Phase 5 payment refunds, merchant settlement, emergency circuit breaker, admin audit logging, Phase 6 student frontend PWA, Phase 7 merchant portal and admin console, and Phase 8 security hardening, unified PIN lockout, atomic challenge consumption, and full threat model validation exist and are verified. Phase 9 testnet deployment and final demo documentation are planned. Canonical architecture and security assessment are in `docs/THREAT_MODEL.md`.
+Agentic workflow/configuration, Phase 0 tooling, Phase 1 smart contracts, Phase 2 shared schemas/backend foundation, Phase 3 student onboarding/passkeys/PIN, Phase 4 merchant management, minting, payment authorization pipeline, blockchain indexer, Phase 5 payment refunds, merchant settlement, emergency circuit breaker, admin audit logging, Phase 6 student frontend PWA, Phase 7 merchant portal and admin console, Phase 8 security hardening, unified PIN lockout, atomic challenge consumption, and full threat model validation, and Phase 9 deployment records (`deployments/`), demo seed automation (`scripts/demo-seed.mjs`), `docs/DEMO_SCRIPT.md`, `docs/REPORT_MATERIAL.md`, and complete `README.md` exist and are verified. Canonical architecture and security assessment are in `docs/THREAT_MODEL.md`.
 
 ## Canonical references
 

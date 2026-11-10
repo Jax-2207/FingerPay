@@ -5,8 +5,18 @@ import { loadConfig } from './config.js';
 import { createRuntime } from './runtime.js';
 
 async function start(): Promise<void> {
-  const envPath = resolve(process.cwd(), '.env');
-  if (existsSync(envPath)) process.loadEnvFile(envPath);
+  const candidatePaths = [
+    resolve(process.cwd(), '.env'),
+    resolve(process.cwd(), '../../.env'),
+    resolve(process.cwd(), '../.env'),
+    resolve(import.meta.dirname, '../../../.env'),
+  ];
+  for (const candidate of candidatePaths) {
+    if (existsSync(candidate)) {
+      process.loadEnvFile(candidate);
+      break;
+    }
+  }
 
   const config = loadConfig(process.env);
   const runtime = createRuntime(config);

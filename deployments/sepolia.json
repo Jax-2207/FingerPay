@@ -1,0 +1,12 @@
+{
+  "network": "sepolia",
+  "chainId": "11155111",
+  "adminAddress": "0x0000000000000000000000000000000000000000",
+  "relayerAddress": "0x0000000000000000000000000000000000000000",
+  "contracts": {
+    "campusCoin": "0x0000000000000000000000000000000000000000",
+    "fingerPay": "0x0000000000000000000000000000000000000000"
+  },
+  "status": "template_unfunded",
+  "note": "Sepolia deployment template. For local evaluation and demo, localhost (chain ID 31337) is primary."
+}

@@ -1,6 +1,6 @@
 # FingerPay phase progress
 
-Phases 0–8 are complete. Phase 9 and later application functionality remains **PLANNED**. This file is the canonical phase-level status record.
+Phases 0–9 are complete. Phase 10 optional stretch goal remains **PLANNED / OPTIONAL**. This file is the canonical phase-level status record.
 
 | Phase                                      | Status             | Evidence / next gate                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -13,10 +13,23 @@ Phases 0–8 are complete. Phase 9 and later application functionality remains *
 | 6 — Student frontend                       | COMPLETE           | Student dashboard, QR scanner, WebAuthn passkey & PIN payment confirmation, history, Recharts analytics, profile, route guards, and PWA manifest verified; see Phase 6 verification below.                                              |
 | 7 — Merchant and Admin frontends           | COMPLETE           | Merchant portal (terminal, QR, live status, settlements) and Admin console (users, merchants, PRN import, mint, refunds, settlements, circuit breaker, audit logs) verified; see Phase 7 verification below.                            |
 | 8 — Hardening, security, E2E, threat model | COMPLETE           | Security hardening, unified PIN lockout, atomic challenge consumption, adversarial test suite (16 tests), extended Firestore rules, and validated `docs/THREAT_MODEL.md` verified; see Phase 8 verification below.                      |
-| 9 — Testnet/demo and final docs            | PLANNED            | Phase 8 sign-off complete.                                                                                                                                                                                                              |
+| 9 — Testnet/demo and final docs            | COMPLETE           | Deployment records in `deployments/`, automated `pnpm demo:seed`, `docs/DEMO_SCRIPT.md`, `docs/REPORT_MATERIAL.md`, and updated `README.md` verified; see Phase 9 verification below.                                                    |
 | 10 — Optional stretch                      | PLANNED / OPTIONAL | Only after Phases 0–9 pass; at most one goal.                                                                                                                                                                                           |
 
-Phase 0 contains repository scaffolding. Phase 1 contracts, Phase 2 shared/backend foundations, Phase 3 student onboarding/passkeys/PIN, Phase 4 merchant & payment pipelines, Phase 5 refunds/settlement/controls, Phase 6 student frontend, Phase 7 merchant and admin frontends, and Phase 8 security hardening are implemented. Phase 9 and later product functionality remains PLANNED.
+Phase 0 contains repository scaffolding. Phase 1 contracts, Phase 2 shared/backend foundations, Phase 3 student onboarding/passkeys/PIN, Phase 4 merchant & payment pipelines, Phase 5 refunds/settlement/controls, Phase 6 student frontend, Phase 7 merchant and admin frontends, Phase 8 security hardening, and Phase 9 demo/documentation are implemented. Phase 10 remains PLANNED / OPTIONAL.
+
+## Phase 9 verification
+
+- Lead sign-off: **APPROVED** — Phase 9 deliverables completed. Localhost deployment configuration (`deployments/localhost.json`) and Sepolia testnet template (`deployments/sepolia.json`) recorded; automated seeding script `pnpm demo:seed` (`scripts/demo-seed.mjs`) seeds demo admin, two merchants, five students with pre-minted CPC and Argon2id PIN hashes, and five available PRNs for live signup; `docs/DEMO_SCRIPT.md` details 7 guided demonstration scenes and mobile testing instructions; `docs/REPORT_MATERIAL.md` contains verified gas tables, latency metrics, and test results without placeholders; root `README.md` includes full Mermaid architecture diagram and under-20-minute setup guide.
+- Senior Developer: **APPROVED** — `demo:seed` is idempotent and safe against existing users; PIN hash calculation matches production Argon2id cost parameters; wallet derivation strictly uses `deriveWalletAddress` with configured salt; zero hardcoded credentials or private keys in tracked artifacts; contracts correctly linked and controller-authorized.
+- QA: **PASS** — Build and check suites passing:
+  - `corepack pnpm lint` **PASS**
+  - `corepack pnpm typecheck` **PASS**
+  - `corepack pnpm test` **PASS** (50/50 tests passing)
+  - `corepack pnpm --filter @fingerpay/frontend build` **PASS**
+  - Deployment records exist and match deployed local addresses.
+- Security Reviewer: **PASS** — No secrets committed to source control; `.gitignore` covers service accounts and environment files; clear operational limitations in `REPORT_MATERIAL.md` and `THREAT_MODEL.md` reiterate closed-loop zero-monetary-value token model and device-bound biometric storage.
+
 
 ## Phase 8 verification
 

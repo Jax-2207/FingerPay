@@ -20,7 +20,8 @@
     "test:phase3": "node scripts/phase3-integration.mjs",
     "test:phase4": "node scripts/phase4-integration.mjs",
     "test:phase5": "node scripts/phase5-integration.mjs",
-    "test:phase8": "node scripts/phase8-integration.mjs"
+    "test:phase8": "node scripts/phase8-integration.mjs",
+    "demo:seed": "node scripts/demo-seed.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

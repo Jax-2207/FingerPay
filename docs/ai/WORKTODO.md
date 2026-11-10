@@ -13,12 +13,12 @@ This backlog follows `docs/BUILD_GUIDE.md` Part D. Phase status reflects complet
 - Phase 6 — Frontend foundation and student PWA. **COMPLETE**; evidence in `docs/PROGRESS.md`.
 - Phase 7 — Merchant and Admin frontends. **COMPLETE**; evidence in `docs/PROGRESS.md`.
 - Phase 8 — Hardening, security, E2E tests, full threat model. **COMPLETE**; evidence in `docs/PROGRESS.md`.
-- Phase 9 — Testnet/demo deployment and final documentation.
+- Phase 9 — Testnet/demo deployment and final documentation. **COMPLETE**; evidence in `docs/PROGRESS.md`.
 - Phase 10 — At most one optional stretch goal, only after Phases 0–9 pass.
 
 ## In progress
 
-- None. Phase 9 is next.
+- None. Phase 9 is complete. Phase 10 optional stretch goal is next if requested.
 
 ## Done
 
