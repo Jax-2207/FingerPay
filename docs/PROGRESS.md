@@ -1,6 +1,6 @@
 # FingerPay phase progress
 
-Phases 0–4 are complete. Phase 5 and later application functionality remains **PLANNED**. This file is the canonical phase-level status record.
+Phases 0–5 are complete. Phase 6 and later application functionality remains **PLANNED**. This file is the canonical phase-level status record.
 
 | Phase                                      | Status             | Evidence / next gate                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -9,14 +9,22 @@ Phases 0–4 are complete. Phase 5 and later application functionality remains *
 | 2 — Shared package and backend foundation  | COMPLETE           | Implementation commit `8da7f032a292131eb5d41b5262ac78e12b56d981`. Phase 2 tests, integration, root checks, Senior Developer, QA, Security Reviewer, and Lead sign-off passed; see Phase 2 verification below.                           |
 | 3 — PRN onboarding, approval, passkey, PIN | COMPLETE           | PRN allowlist, student onboarding, passkey registration, PIN Argon2id hashing & lockout, Firestore rules verified; see Phase 3 verification below.                                                                                      |
 | 4 — Merchants, mint, payment pipeline      | COMPLETE           | Merchant onboarding, admin minting, intent creation, 15-step payment pipeline, indexer, limits, history & analytics verified; see Phase 4 verification below.                                                                           |
-| 5 — Refunds, settlements, circuit breaker  | PLANNED            | Phase 4 sign-off complete.                                                                                                                                                                                                              |
-| 6 — Student frontend                       | PLANNED            | Phase 5 sign-off required.                                                                                                                                                                                                              |
+| 5 — Refunds, settlements, circuit breaker  | COMPLETE           | Refund workflow, merchant settlement lifecycle, contract pause/unpause, indexer events, audit logs verified; see Phase 5 verification below.                                                                                            |
+| 6 — Student frontend                       | PLANNED            | Phase 5 sign-off complete.                                                                                                                                                                                                              |
 | 7 — Merchant and Admin frontends           | PLANNED            | Phase 6 sign-off required.                                                                                                                                                                                                              |
 | 8 — Hardening, security, E2E, threat model | PLANNED            | Phase 7 sign-off required.                                                                                                                                                                                                              |
 | 9 — Testnet/demo and final docs            | PLANNED            | Phase 8 sign-off required.                                                                                                                                                                                                              |
 | 10 — Optional stretch                      | PLANNED / OPTIONAL | Only after Phases 0–9 pass; at most one goal.                                                                                                                                                                                           |
 
 Phase 0 contains repository scaffolding. Phase 1 contracts and Phase 2 shared/backend foundations are implemented. Phase 3 and later product functionality remains PLANNED. Phase 0–2 release commits and tags are recorded in this progress file and their completion evidence.
+
+## Phase 5 verification
+
+- Lead sign-off: **APPROVED** — Payment refunds (`FingerPay.refund`), merchant settlement request with balance and pending reservation checks, admin settlement decision (`FingerPay.settle`), mark-paid external rupee state machine, emergency circuit breaker (`FingerPay.pause` / `FingerPay.unpause`), paused operation rejection, and indexer handling for `Refunded` and `Settled` events verified.
+- Senior Developer: **APPROVED** — Strict authorization checks on refund, settlement, and pause operations; atomic state updates in Firestore; no monetary claims on-chain beyond CPC burning; strict contract error decoding.
+- QA: **PASS** — `corepack pnpm test:phase5` passes 11/11 tests. Covers valid refund, unauthorized refund rejection, unconfirmed payment refund prevention, duplicate refund rejection, failed refund handling, valid settlement request, available balance & pending reservation checks, inactive merchant rejection, unauthorized settlement decision rejection, token burn on approval, external mark-paid state transition, failed settlement handling, admin pause/unpause, 503 SYSTEM_PAUSED rejection when paused, indexer processing for Refunded and Settled events, and admin audit logs pagination.
+- Security Reviewer: **PASS** — Least-privilege role boundaries on contract controls and settlement decisions; state machine prevents double-settlement and over-burning; smart contract balance is the source of truth; zero banking/gateway integrations; audit records complete.
+- Root checks: `corepack pnpm lint` **PASS**; `corepack pnpm typecheck` **PASS**; `corepack pnpm test` **PASS**; `corepack pnpm test:phase2` **PASS**; `corepack pnpm test:phase3` **PASS**; `corepack pnpm test:phase4` **PASS**; `corepack pnpm test:phase5` **PASS**.
 
 ## Phase 4 verification
 

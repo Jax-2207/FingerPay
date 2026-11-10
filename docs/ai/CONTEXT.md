@@ -24,11 +24,11 @@ Solidity, Hardhat, OpenZeppelin, TypeChain and ethers are implemented for Phase 
 
 ## IMPLEMENTED: Phase status
 
-Phases 0, 1, 2, 3, and 4 are complete and signed off. Phase 5 (Refunds, settlements, circuit breaker) is the next planned phase. Roadmap and verification evidence are in `docs/PROGRESS.md` and `docs/ai/WORKTODO.md`.
+Phases 0, 1, 2, 3, 4, and 5 are complete and signed off. Phase 6 (Frontend foundation and student PWA) is the next planned phase. Roadmap and verification evidence are in `docs/PROGRESS.md` and `docs/ai/WORKTODO.md`.
 
-## IMPLEMENTED: Repository guidance, tooling, contracts, onboarding, and payment pipeline
+## IMPLEMENTED: Repository guidance, tooling, contracts, onboarding, payment pipeline, and contract controls
 
-Agentic workflow/configuration, Phase 0 tooling, Phase 1 smart contracts, Phase 2 shared schemas/backend foundation, Phase 3 student onboarding/passkeys/PIN, and Phase 4 merchant management, minting, payment authorization pipeline, and blockchain indexer exist and are verified. Phase 5 refund/settlement flows and frontend PWAs remain planned. The full threat model remains planned for Phase 8; current architecture notes are in `docs/THREAT_MODEL.md`.
+Agentic workflow/configuration, Phase 0 tooling, Phase 1 smart contracts, Phase 2 shared schemas/backend foundation, Phase 3 student onboarding/passkeys/PIN, Phase 4 merchant management, minting, payment authorization pipeline, blockchain indexer, and Phase 5 payment refunds, merchant settlement, emergency circuit breaker, and admin audit logging exist and are verified. Frontend PWAs remain planned. The full threat model remains planned for Phase 8; current architecture notes are in `docs/THREAT_MODEL.md`.
 
 ## Canonical references
 

@@ -339,6 +339,9 @@ export function createPhase4Router(deps: Phase4Dependencies): Router {
 
   router.post('/admin/mint', ...adminOnly, async (request, response, next) => {
     try {
+      if (typeof chain.isPaused === 'function' && (await chain.isPaused())) {
+        throw new HttpError(503, 'SYSTEM_PAUSED', 'System is currently paused');
+      }
       const input = parseBody(AdminMintInput, request.body);
       const caller = actor(response);
       const amountBigInt = BigInt(input.amount);
@@ -414,6 +417,9 @@ export function createPhase4Router(deps: Phase4Dependencies): Router {
 
   router.post('/intents', ...merchantOnly, async (request, response, next) => {
     try {
+      if (typeof chain.isPaused === 'function' && (await chain.isPaused())) {
+        throw new HttpError(503, 'SYSTEM_PAUSED', 'System is currently paused');
+      }
       const input = parseBody(CreateIntentInput, request.body);
       const caller = actor(response);
       const merchantDoc = await db.collection('merchants').doc(caller.uid).get();
@@ -617,6 +623,9 @@ export function createPhase4Router(deps: Phase4Dependencies): Router {
     ...userOnly,
     async (request, response, next) => {
       try {
+        if (typeof chain.isPaused === 'function' && (await chain.isPaused())) {
+          throw new HttpError(503, 'SYSTEM_PAUSED', 'System is currently paused');
+        }
         const intentId = getParam(request.params.id);
         const caller = actor(response);
         const input = parseBody(ConfirmIntentInput, request.body);

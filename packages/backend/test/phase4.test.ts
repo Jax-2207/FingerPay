@@ -81,6 +81,7 @@ const phase4Suite = describe.skipIf(emulator === undefined)(
       isMerchantActive: async (addr: string) => mockMerchantActive.get(addr.toLowerCase()) ?? true,
       isMerchantRegistered: async (addr: string) => mockMerchantActive.has(addr.toLowerCase()),
       isIntentUsed: async () => false,
+      isPaused: async () => false,
       decodeCustomError: (err: unknown) => (err instanceof Error ? err.message : 'CUSTOM_REVERT'),
     } as unknown as ChainService;
 

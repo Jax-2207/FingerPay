@@ -154,6 +154,68 @@ export class IndexerService {
           });
           processedCount++;
         }
+      } else if (parsed.name === 'Refunded') {
+        const intentId = String(parsed.args[0]);
+        const userAddress = String(parsed.args[1]);
+        const merchantAddress = String(parsed.args[2]);
+        const amount = String(parsed.args[3]);
+
+        const refundDocRef = this.db.collection('indexedEvents').doc(eventId);
+        const existing = await refundDocRef.get();
+        if (!existing.exists) {
+          await refundDocRef.set({
+            type: 'Refunded',
+            intentId,
+            userAddress,
+            merchantAddress,
+            amount,
+            txHash,
+            blockNumber: log.blockNumber,
+            logIndex,
+            createdAt: FieldValue.serverTimestamp(),
+          });
+
+          const intentDoc = await this.db.collection('paymentIntents').doc(intentId).get();
+          if (intentDoc.exists) {
+            await intentDoc.ref.update({
+              status: 'refunded',
+              refundTxHash: txHash,
+              refundedAt: FieldValue.serverTimestamp(),
+            });
+          }
+
+          const txQuery = await this.db
+            .collection('transactions')
+            .where('intentId', '==', intentId)
+            .get();
+          for (const doc of txQuery.docs) {
+            await doc.ref.update({
+              refunded: true,
+              refundTxHash: txHash,
+            });
+          }
+          processedCount++;
+        }
+      } else if (parsed.name === 'Settled') {
+        const merchantAddress = String(parsed.args[0]);
+        const amount = String(parsed.args[1]);
+        const settlementRef = String(parsed.args[2]);
+
+        const settleDocRef = this.db.collection('indexedEvents').doc(eventId);
+        const existing = await settleDocRef.get();
+        if (!existing.exists) {
+          await settleDocRef.set({
+            type: 'Settled',
+            merchantAddress,
+            amount,
+            settlementRef,
+            txHash,
+            blockNumber: log.blockNumber,
+            logIndex,
+            createdAt: FieldValue.serverTimestamp(),
+          });
+          processedCount++;
+        }
       }
     }
 

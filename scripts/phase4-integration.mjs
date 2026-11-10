@@ -150,3 +150,4 @@ try {
     await rm(temporaryConfigDirectory, { recursive: true, force: true });
   }
 }
+

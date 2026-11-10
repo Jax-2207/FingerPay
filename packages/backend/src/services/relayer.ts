@@ -96,6 +96,46 @@ export class RelayerService {
     });
   }
 
+  refund(intentId: string): Promise<string> {
+    return this.queue.enqueue(async () => {
+      const tx = (await this.fingerPayAdmin.getFunction('refund')(intentId)) as TransactionResponse;
+      const receipt = await tx.wait(1);
+      if (receipt === null) throw new Error('Transaction failed or dropped');
+      return receipt.hash;
+    });
+  }
+
+  settle(merchantAddress: string, amount: bigint, settlementRef: string): Promise<string> {
+    return this.queue.enqueue(async () => {
+      const tx = (await this.fingerPayAdmin.getFunction('settle')(
+        merchantAddress,
+        amount,
+        settlementRef,
+      )) as TransactionResponse;
+      const receipt = await tx.wait(1);
+      if (receipt === null) throw new Error('Transaction failed or dropped');
+      return receipt.hash;
+    });
+  }
+
+  pause(): Promise<string> {
+    return this.queue.enqueue(async () => {
+      const tx = (await this.fingerPayAdmin.getFunction('pause')()) as TransactionResponse;
+      const receipt = await tx.wait(1);
+      if (receipt === null) throw new Error('Transaction failed or dropped');
+      return receipt.hash;
+    });
+  }
+
+  unpause(): Promise<string> {
+    return this.queue.enqueue(async () => {
+      const tx = (await this.fingerPayAdmin.getFunction('unpause')()) as TransactionResponse;
+      const receipt = await tx.wait(1);
+      if (receipt === null) throw new Error('Transaction failed or dropped');
+      return receipt.hash;
+    });
+  }
+
   pay(
     userAddress: string,
     merchantAddress: string,

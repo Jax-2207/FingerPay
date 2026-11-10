@@ -73,6 +73,11 @@ export class ChainService {
     return Boolean(result);
   }
 
+  async isPaused(): Promise<boolean> {
+    const result: unknown = await this.fingerPay.getFunction('paused').staticCall();
+    return Boolean(result);
+  }
+
   decodeCustomError(error: unknown): string | undefined {
     const data = findErrorData(error);
     if (data === undefined) return undefined;

@@ -9,16 +9,17 @@
   },
   "scripts": {
     "lint": "eslint packages scripts --max-warnings 0 && prettier --check \"packages/**/*.{ts,tsx,json,html}\" \"*.{json,yml,yaml,ts,js}\"",
-    "typecheck": "pnpm --filter @fingerpay/contracts typecheck && tsc --noEmit -p packages/shared/tsconfig.json && tsc --noEmit -p packages/backend/tsconfig.json && tsc --noEmit -p packages/frontend/tsconfig.json",
+    "typecheck": "corepack pnpm --filter @fingerpay/contracts typecheck && tsc --noEmit -p packages/shared/tsconfig.json && tsc --noEmit -p packages/backend/tsconfig.json && tsc --noEmit -p packages/frontend/tsconfig.json",
     "test": "vitest run",
-    "build": "pnpm --filter @fingerpay/contracts build && pnpm --filter @fingerpay/shared build && pnpm --filter @fingerpay/backend build && vite build packages/frontend --config packages/frontend/vite.config.ts",
+    "build": "corepack pnpm --filter @fingerpay/contracts build && corepack pnpm --filter @fingerpay/shared build && corepack pnpm --filter @fingerpay/backend build && vite build packages/frontend --config packages/frontend/vite.config.ts",
     "dev": "vite --config packages/frontend/vite.config.ts --host 127.0.0.1 packages/frontend",
     "emulators": "pnpm dlx firebase-tools@15.35.0 --config firebase/firebase.json emulators:start --project demo-fingerpay --only auth,firestore",
     "prepare": "husky",
     "verify:config": "vitest run scripts/phase0-config.test.ts",
     "test:phase2": "vitest run packages/shared/test packages/backend/test && node scripts/phase2-integration.mjs",
     "test:phase3": "node scripts/phase3-integration.mjs",
-    "test:phase4": "node scripts/phase4-integration.mjs"
+    "test:phase4": "node scripts/phase4-integration.mjs",
+    "test:phase5": "node scripts/phase5-integration.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

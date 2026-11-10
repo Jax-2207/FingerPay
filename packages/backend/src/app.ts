@@ -9,6 +9,7 @@ import { createHttpLogger } from './logger.js';
 import type { ChainHealth } from './services/chain.js';
 import { createPhase3Router } from './routes/phase3.js';
 import { createPhase4Router } from './routes/phase4.js';
+import { createPhase5Router } from './routes/phase5.js';
 import type { Auth } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
 import type { IdTokenVerifier } from './middleware/auth.js';
@@ -100,6 +101,17 @@ export function createApp({
         chain: chain as ChainService,
         relayer,
         limits: limitsService,
+        audit,
+        config,
+      }),
+    );
+    app.use(
+      '/api',
+      createPhase5Router({
+        firestore,
+        verifier: tokenVerifier,
+        chain: chain as ChainService,
+        relayer,
         audit,
         config,
       }),
