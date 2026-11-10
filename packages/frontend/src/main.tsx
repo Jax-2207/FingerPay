@@ -1,9 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-
-function WorkspacePlaceholder() {
-  return <main>FingerPay frontend workspace</main>;
-}
+import { App } from './App.js';
+import './index.css';
 
 const rootElement = document.getElementById('root');
 
@@ -13,6 +11,6 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <WorkspacePlaceholder />
+    <App />
   </StrictMode>,
 );

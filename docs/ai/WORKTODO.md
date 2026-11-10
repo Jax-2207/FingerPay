@@ -10,7 +10,7 @@ This backlog follows `docs/BUILD_GUIDE.md` Part D. Phase status reflects complet
 - Phase 3 — PRN onboarding, approval, passkey, PIN, Firestore rules. **COMPLETE**; evidence in `docs/PROGRESS.md`.
 - Phase 4 — Merchant onboarding, mint, payment pipeline, indexer, history, analytics. **COMPLETE**; evidence in `docs/PROGRESS.md`.
 - Phase 5 — Refunds, settlements, circuit breaker, audit logs. **COMPLETE**; evidence in `docs/PROGRESS.md`.
-- Phase 6 — Frontend foundation and student PWA.
+- Phase 6 — Frontend foundation and student PWA. **COMPLETE**; evidence in `docs/PROGRESS.md`.
 - Phase 7 — Merchant and Admin frontends.
 - Phase 8 — Hardening, security, E2E tests, full threat model.
 - Phase 9 — Testnet/demo deployment and final documentation.
@@ -18,7 +18,7 @@ This backlog follows `docs/BUILD_GUIDE.md` Part D. Phase status reflects complet
 
 ## In progress
 
-- None. Phase 6 is next.
+- None. Phase 7 is next.
 
 ## Done
 

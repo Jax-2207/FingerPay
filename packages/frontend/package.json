@@ -9,7 +9,20 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@fingerpay/shared": "workspace:*",
     "@simplewebauthn/browser": "14.0.0",
-    "firebase": "13.2.0"
+    "@tanstack/react-query": "^5.107.1",
+    "firebase": "13.2.0",
+    "html5-qrcode": "^2.3.8",
+    "lucide-react": "^1.70.0",
+    "react-router-dom": "^7.18.5",
+    "recharts": "^3.10.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "jsdom": "^31.0.0",
+    "tailwindcss": "^4.3.5"
   }
 }
