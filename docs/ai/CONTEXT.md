@@ -24,11 +24,11 @@ Solidity, Hardhat, OpenZeppelin, TypeChain and ethers are implemented for Phase 
 
 ## IMPLEMENTED: Phase status
 
-Phases 0, 1, 2, 3, 4, 5, 6, and 7 are complete and signed off. Phase 8 (Hardening, security, and E2E tests) is the next planned phase. Roadmap and verification evidence are in `docs/PROGRESS.md` and `docs/ai/WORKTODO.md`.
+Phases 0, 1, 2, 3, 4, 5, 6, 7, and 8 are complete and signed off. Phase 9 (Testnet deployment, demo mode, and documentation) is the next planned phase. Roadmap and verification evidence are in `docs/PROGRESS.md` and `docs/ai/WORKTODO.md`.
 
-## IMPLEMENTED: Repository guidance, tooling, contracts, onboarding, payment pipeline, contract controls, student, merchant, and admin frontends
+## IMPLEMENTED: Repository guidance, tooling, contracts, onboarding, payment pipeline, contract controls, frontends, security hardening & threat model
 
-Agentic workflow/configuration, Phase 0 tooling, Phase 1 smart contracts, Phase 2 shared schemas/backend foundation, Phase 3 student onboarding/passkeys/PIN, Phase 4 merchant management, minting, payment authorization pipeline, blockchain indexer, Phase 5 payment refunds, merchant settlement, emergency circuit breaker, admin audit logging, Phase 6 student frontend PWA, and Phase 7 merchant portal (terminal, QR, settlements) and admin console (user/merchant directory, PRN import, minting, refunds, settlement burns, circuit breaker, audit logs) exist and are verified. Hardening, security audits, and Playwright E2E tests remain planned for Phase 8. The full threat model remains planned for Phase 8; current architecture notes are in `docs/THREAT_MODEL.md`.
+Agentic workflow/configuration, Phase 0 tooling, Phase 1 smart contracts, Phase 2 shared schemas/backend foundation, Phase 3 student onboarding/passkeys/PIN, Phase 4 merchant management, minting, payment authorization pipeline, blockchain indexer, Phase 5 payment refunds, merchant settlement, emergency circuit breaker, admin audit logging, Phase 6 student frontend PWA, Phase 7 merchant portal and admin console, and Phase 8 security hardening, unified PIN lockout, atomic challenge consumption, and full threat model validation exist and are verified. Phase 9 testnet deployment and final demo documentation are planned. Canonical architecture and security assessment are in `docs/THREAT_MODEL.md`.
 
 ## Canonical references
 

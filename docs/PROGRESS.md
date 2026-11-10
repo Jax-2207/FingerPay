@@ -1,6 +1,6 @@
 # FingerPay phase progress
 
-Phases 0–7 are complete. Phase 8 and later application functionality remains **PLANNED**. This file is the canonical phase-level status record.
+Phases 0–8 are complete. Phase 9 and later application functionality remains **PLANNED**. This file is the canonical phase-level status record.
 
 | Phase                                      | Status             | Evidence / next gate                                                                                                                                                                                                                    |
 | ------------------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -10,13 +10,27 @@ Phases 0–7 are complete. Phase 8 and later application functionality remains *
 | 3 — PRN onboarding, approval, passkey, PIN | COMPLETE           | PRN allowlist, student onboarding, passkey registration, PIN Argon2id hashing & lockout, Firestore rules verified; see Phase 3 verification below.                                                                                      |
 | 4 — Merchants, mint, payment pipeline      | COMPLETE           | Merchant onboarding, admin minting, intent creation, 15-step payment pipeline, indexer, limits, history & analytics verified; see Phase 4 verification below.                                                                           |
 | 5 — Refunds, settlements, circuit breaker  | COMPLETE           | Refund workflow, merchant settlement lifecycle, contract pause/unpause, indexer events, audit logs verified; see Phase 5 verification below.                                                                                            |
-| 6 — Student frontend                       | COMPLETE           | Student dashboard, QR scanner, WebAuthn passkey & PIN payment confirmation, history, Recharts analytics, profile, route guards, and PWA manifest verified; see Phase 6 verification below.                                               |
-| 7 — Merchant and Admin frontends           | COMPLETE           | Merchant portal (terminal, QR, live status, settlements) and Admin console (users, merchants, PRN import, mint, refunds, settlements, circuit breaker, audit logs) verified; see Phase 7 verification below.                               |
-| 8 — Hardening, security, E2E, threat model | PLANNED            | Phase 7 sign-off complete.                                                                                                                                                                                                              |
-| 9 — Testnet/demo and final docs            | PLANNED            | Phase 8 sign-off required.                                                                                                                                                                                                              |
+| 6 — Student frontend                       | COMPLETE           | Student dashboard, QR scanner, WebAuthn passkey & PIN payment confirmation, history, Recharts analytics, profile, route guards, and PWA manifest verified; see Phase 6 verification below.                                              |
+| 7 — Merchant and Admin frontends           | COMPLETE           | Merchant portal (terminal, QR, live status, settlements) and Admin console (users, merchants, PRN import, mint, refunds, settlements, circuit breaker, audit logs) verified; see Phase 7 verification below.                            |
+| 8 — Hardening, security, E2E, threat model | COMPLETE           | Security hardening, unified PIN lockout, atomic challenge consumption, adversarial test suite (16 tests), extended Firestore rules, and validated `docs/THREAT_MODEL.md` verified; see Phase 8 verification below.                      |
+| 9 — Testnet/demo and final docs            | PLANNED            | Phase 8 sign-off complete.                                                                                                                                                                                                              |
 | 10 — Optional stretch                      | PLANNED / OPTIONAL | Only after Phases 0–9 pass; at most one goal.                                                                                                                                                                                           |
 
-Phase 0 contains repository scaffolding. Phase 1 contracts, Phase 2 shared/backend foundations, Phase 3 student onboarding/passkeys/PIN, Phase 4 merchant & payment pipelines, Phase 5 refunds/settlement/controls, Phase 6 student frontend, and Phase 7 merchant and admin frontends are implemented. Phase 8 and later product functionality remains PLANNED.
+Phase 0 contains repository scaffolding. Phase 1 contracts, Phase 2 shared/backend foundations, Phase 3 student onboarding/passkeys/PIN, Phase 4 merchant & payment pipelines, Phase 5 refunds/settlement/controls, Phase 6 student frontend, Phase 7 merchant and admin frontends, and Phase 8 security hardening are implemented. Phase 9 and later product functionality remains PLANNED.
+
+## Phase 8 verification
+
+- Lead sign-off: **APPROVED** — Security hardening and adversarial verification complete. Global API rate limiting (120 req/min) deployed on `/api`; atomic WebAuthn challenge single-use consumption enforced via Firestore transaction; PIN lockout synchronization unified between `/pin/verify` and `/intents/:id/confirm` with helper `getLockUntilMillis`; request body limit enforced at 64KB with 413 responses; generic internal server error handling prevents information disclosure; `docs/THREAT_MODEL.md` completed with assets, actors, verified mitigations, and honest architectural limitations.
+- Senior Developer: **APPROVED** — Atomic challenge consumption in `phase4.ts` eliminates race conditions; unified `Timestamp` lockout handling across `phase3.ts` and `phase4.ts` closes the lockout bypass gap; rate limiting protects against unauthenticated brute force; zero exposure of secrets in errors or logs; all 16 adversarial tests in `packages/backend/test/phase8.security.test.ts` pass cleanly.
+- QA: **PASS** — Complete automated test suite verified:
+  - `corepack pnpm test:phase8`: 16/16 tests passing across WebAuthn assertion replay, cross-intent challenge reuse, expired challenge rejection, cross-user challenge isolation, expired intent rejection, concurrent double-confirm race resolution, underfunded payment rejection, self-payment prevention, weak PIN setup rejection, unified 5-attempt/15-minute lockout synchronization, administrative role escalation prevention across 17 endpoints, merchant endpoint role enforcement, unauthenticated request rejection, request payload size boundary (64KB), error stack-trace redaction, and exact `computeIntentId` keccak256 hash validation.
+  - `corepack pnpm test:phase3`: 8/8 tests passing (including extended Firestore client rules tests denying reads/writes for intents, settlements, transactions, and adminLogs).
+  - `corepack pnpm test:phase4`: 14/14 tests passing.
+  - `corepack pnpm test:phase5`: 11/11 tests passing.
+  - `corepack pnpm test`: 50/50 unit and component tests passing.
+  - Hardhat contract tests: 14/14 tests passing.
+- Security Reviewer: **PASS** — No critical or high-severity vulnerabilities remain. Replay attacks, cross-intent assertion reuse, concurrent double-confirm races, role escalations, and unauthenticated privileged access are provably rejected. Firestore security rules strictly deny all client-side writes. Honest operational limitations documented in `docs/THREAT_MODEL.md`.
+- Root checks: `corepack pnpm lint` **PASS**; `corepack pnpm typecheck` **PASS**; `corepack pnpm test` **PASS**; `corepack pnpm --filter @fingerpay/frontend build` **PASS**.
 
 ## Phase 7 verification
 

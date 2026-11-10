@@ -68,6 +68,18 @@ const rulesSuite = describe.skipIf(emulator === undefined)('Phase 3 Firestore ru
     await assertFails(getDoc(doc(db, 'prnAllowlist', 'PRN-1')));
     await assertFails(setDoc(doc(db, 'pinSecrets', uid), { hash: 'attack' }));
   });
+
+  it('denies client reads and writes for intents, settlements, transactions, and adminLogs', async () => {
+    const db = environment.authenticatedContext(uid).firestore();
+    await assertFails(getDoc(doc(db, 'intents', 'intent-1')));
+    await assertFails(setDoc(doc(db, 'intents', 'intent-1'), { status: 'confirmed' }));
+    await assertFails(getDoc(doc(db, 'settlements', 'settle-1')));
+    await assertFails(setDoc(doc(db, 'settlements', 'settle-1'), { status: 'paid' }));
+    await assertFails(getDoc(doc(db, 'adminLogs', 'log-1')));
+    await assertFails(setDoc(doc(db, 'adminLogs', 'log-1'), { action: 'hacked' }));
+    await assertFails(getDoc(doc(db, 'transactions', 'tx-1')));
+    await assertFails(setDoc(doc(db, 'transactions', 'tx-1'), { amount: 1000 }));
+  });
 });
 
 void rulesSuite;

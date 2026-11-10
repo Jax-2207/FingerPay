@@ -113,6 +113,19 @@ export function isTrivialPin(pin: string): boolean {
   return ascending || descending;
 }
 
+export function getLockUntilMillis(value: unknown): number | null {
+  if (typeof value === 'number') return value;
+  if (
+    value &&
+    typeof value === 'object' &&
+    'toMillis' in value &&
+    typeof (value as { toMillis: () => number }).toMillis === 'function'
+  ) {
+    return (value as { toMillis: () => number }).toMillis();
+  }
+  return null;
+}
+
 export function createPhase3Router(deps: Phase3Dependencies): Router {
   const { auth, firestore: db, verifier, chain, audit, config } = deps;
   const router = Router();
@@ -468,23 +481,23 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
       const snapshot = await secretRef.get();
       if (!snapshot.exists) throw new HttpError(404, 'PIN_NOT_SET', 'PIN has not been set');
       const now = Date.now();
-      const lockedUntil = snapshot.get('lockedUntil');
-      if (typeof lockedUntil === 'number' && lockedUntil > now)
+      const lockedUntilMillis = getLockUntilMillis(snapshot.get('lockedUntil'));
+      if (lockedUntilMillis !== null && lockedUntilMillis > now)
         throw new HttpError(423, 'PIN_LOCKED', 'PIN verification is temporarily locked');
       const matches = await argon2.verify(String(snapshot.get('hash')), pin);
       await db.runTransaction(async (transaction) => {
         const fresh = await transaction.get(secretRef);
         if (!fresh.exists) throw new HttpError(404, 'PIN_NOT_SET', 'PIN has not been set');
-        const freshLock = fresh.get('lockedUntil');
-        if (typeof freshLock === 'number' && freshLock > Date.now())
+        const freshLockMillis = getLockUntilMillis(fresh.get('lockedUntil'));
+        if (freshLockMillis !== null && freshLockMillis > Date.now())
           throw new HttpError(423, 'PIN_LOCKED', 'PIN verification is temporarily locked');
-        const lockExpired = typeof freshLock === 'number' && freshLock <= Date.now();
+        const lockExpired = freshLockMillis !== null && freshLockMillis <= Date.now();
         if (matches) transaction.update(secretRef, { failedAttempts: 0, lockedUntil: null });
         else {
           const failures = lockExpired ? 1 : Number(fresh.get('failedAttempts') ?? 0) + 1;
           transaction.update(secretRef, {
             failedAttempts: failures,
-            lockedUntil: failures >= 5 ? Date.now() + 15 * 60 * 1000 : null,
+            lockedUntil: failures >= 5 ? Timestamp.fromMillis(Date.now() + 15 * 60 * 1000) : null,
           });
         }
       });

@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
 import type { Logger } from 'pino';
 import { HEALTH_PATH, MAX_JSON_BODY_BYTES, type HealthResponse } from '@fingerpay/shared';
 import type { AppConfig } from './config.js';
@@ -65,6 +66,23 @@ export function createApp({
   app.use('/api/admin/prn/import', express.text({ type: 'text/csv', limit: MAX_JSON_BODY_BYTES }));
   app.use(express.json({ limit: MAX_JSON_BODY_BYTES }));
   app.use(createHttpLogger(logger));
+
+  const apiRateLimit = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: () => config.NODE_ENV === 'test',
+    handler: (_request, response) => {
+      response.status(429).json({
+        error: {
+          code: 'RATE_LIMITED',
+          message: 'Too many requests; try again shortly',
+        },
+      });
+    },
+  });
+  app.use('/api', apiRateLimit);
 
   app.get(HEALTH_PATH, async (_request, response) => {
     try {

@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { keccak256, toUtf8Bytes } from 'ethers';
 import { computeIntentId } from '@fingerpay/shared';
 import { HttpError } from '../errors.js';
+import { getLockUntilMillis } from './phase3.js';
 import {
   requireAuthentication,
   requireRole,
@@ -661,24 +662,37 @@ export function createPhase4Router(deps: Phase4Dependencies): Router {
         const student = studentDoc.data()!;
 
         // 5. Verify explicit user approval & WebAuthn assertion
-        // 6. Verify challenge is bound to exact payment intent hash
+        // 6. Atomically consume challenge bound to exact payment intent hash
         const challengeRef = db.collection('webauthnChallenges').doc(input.challengeId);
-        const challengeSnap = await challengeRef.get();
-        if (!challengeSnap.exists) {
-          throw new HttpError(
-            400,
-            'CHALLENGE_EXPIRED',
-            'Authentication challenge expired or invalid',
-          );
-        }
-        const challengeData = challengeSnap.data()!;
-        if (
-          challengeData.uid !== caller.uid ||
-          challengeData.intentId !== intent.intentId ||
-          challengeData.purpose !== 'payment'
-        ) {
-          throw new HttpError(400, 'CHALLENGE_MISMATCH', 'Challenge does not match this intent');
-        }
+        const challengeData = await db.runTransaction(async (transaction) => {
+          const challengeSnap = await transaction.get(challengeRef);
+          if (!challengeSnap.exists) {
+            throw new HttpError(
+              400,
+              'CHALLENGE_EXPIRED',
+              'Authentication challenge expired or invalid',
+            );
+          }
+          const data = challengeSnap.data()!;
+          const expiresAt = data.expiresAt;
+          if (
+            data.uid !== caller.uid ||
+            data.intentId !== intent.intentId ||
+            data.purpose !== 'payment'
+          ) {
+            throw new HttpError(400, 'CHALLENGE_MISMATCH', 'Challenge does not match this intent');
+          }
+          if (expiresAt instanceof Timestamp && expiresAt.toMillis() <= Date.now()) {
+            transaction.delete(challengeRef);
+            throw new HttpError(
+              400,
+              'CHALLENGE_EXPIRED',
+              'Authentication challenge expired or invalid',
+            );
+          }
+          transaction.delete(challengeRef);
+          return data;
+        });
 
         const expectedIntentChallenge = Buffer.from(intent.intentId.slice(2), 'hex').toString(
           'base64url',
@@ -718,12 +732,11 @@ export function createPhase4Router(deps: Phase4Dependencies): Router {
           throw new HttpError(401, 'AUTHENTICATION_FAILED', 'Passkey verification failed');
         }
 
-        // Update passkey counter and remove challenge
+        // Update passkey counter
         await keyRef.update({
           counter: verification.authenticationInfo.newCounter,
           lastUsedAt: FieldValue.serverTimestamp(),
         });
-        await challengeRef.delete();
 
         // 8. Verify PIN using Argon2id and enforce lockout policy
         const pinRef = db.collection('pinSecrets').doc(caller.uid);
@@ -732,8 +745,8 @@ export function createPhase4Router(deps: Phase4Dependencies): Router {
           throw new HttpError(400, 'PIN_NOT_SET', 'PIN is not configured');
         }
         const pinData = pinSnap.data()!;
-        const lockUntil = pinData.lockedUntil as Timestamp | null | undefined;
-        if (lockUntil !== null && lockUntil !== undefined && lockUntil.toMillis() > Date.now()) {
+        const lockUntilMillis = getLockUntilMillis(pinData.lockedUntil);
+        if (lockUntilMillis !== null && lockUntilMillis > Date.now()) {
           throw new HttpError(
             403,
             'ACCOUNT_LOCKED',
@@ -743,11 +756,12 @@ export function createPhase4Router(deps: Phase4Dependencies): Router {
 
         const pinValid = await argon2.verify(String(pinData.hash), input.pin);
         if (!pinValid) {
-          const failures = (Number(pinData.failedAttempts) || 0) + 1;
-          const lockUpdates: Record<string, unknown> = { failedAttempts: failures };
-          if (failures >= 5) {
-            lockUpdates.lockedUntil = Timestamp.fromMillis(Date.now() + 15 * 60 * 1000);
-          }
+          const lockExpired = lockUntilMillis !== null && lockUntilMillis <= Date.now();
+          const failures = lockExpired ? 1 : (Number(pinData.failedAttempts) || 0) + 1;
+          const lockUpdates: Record<string, unknown> = {
+            failedAttempts: failures,
+            lockedUntil: failures >= 5 ? Timestamp.fromMillis(Date.now() + 15 * 60 * 1000) : null,
+          };
           await pinRef.update(lockUpdates);
           throw new HttpError(401, 'INVALID_PIN', 'Invalid application PIN');
         }
