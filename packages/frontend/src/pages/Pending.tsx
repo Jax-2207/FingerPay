@@ -72,13 +72,13 @@ export function Pending() {
 
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">Approval Pending</h2>
         <p className="mt-2 text-sm text-slate-600">
-          {profile
+          {profile && profile.prn && profile.prn !== 'Pending'
             ? 'Your PRN registration has been received and is waiting for authorization from Campus Accounts.'
             : 'Your account was created, but your Campus PRN was not linked to the university allowlist.'}
         </p>
 
-        {/* If user has no Firestore profile linked yet */}
-        {!profile && (
+        {/* If user has no Firestore profile linked yet or PRN is Pending */}
+        {(!profile || !profile.prn || profile.prn === 'Pending') && (
           <form
             onSubmit={handleLinkPrn}
             className="my-6 text-left space-y-3 rounded-xl bg-slate-50 p-4 border border-slate-200"
@@ -112,8 +112,8 @@ export function Pending() {
           </form>
         )}
 
-        {/* If profile exists */}
-        {profile && (
+        {/* If profile exists with a real PRN */}
+        {profile && profile.prn && profile.prn !== 'Pending' && (
           <div className="my-6 rounded-xl bg-slate-50 p-4 text-left border border-slate-200">
             <div className="text-xs text-slate-500 font-medium">REGISTERED PRN</div>
             <div className="text-base font-bold text-slate-800">{profile.prn}</div>

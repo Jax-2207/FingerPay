@@ -156,16 +156,33 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
       await db.runTransaction(async (transaction) => {
         const refs = records.map((row) => db.collection('prnAllowlist').doc(row.prn));
         const snapshots = await transaction.getAll(...refs);
-        if (snapshots.some((snapshot) => snapshot.exists))
-          throw new HttpError(409, 'PRN_EXISTS', 'One or more PRNs already exist');
-        records.forEach((row, index) =>
-          transaction.create(refs[index]!, {
-            name: row.name,
-            used: false,
-            importedBy: importer.uid,
-            importedAt: FieldValue.serverTimestamp(),
-          }),
-        );
+        const usedPrns = snapshots
+          .filter((snapshot) => snapshot.exists && snapshot.get('used') === true)
+          .map((snapshot) => snapshot.id);
+        if (usedPrns.length > 0) {
+          throw new HttpError(
+            409,
+            'PRN_EXISTS',
+            `The following PRN(s) are already registered and claimed by students: ${usedPrns.join(', ')}`,
+          );
+        }
+        records.forEach((row, index) => {
+          const snapshot = snapshots[index];
+          if (snapshot && snapshot.exists) {
+            transaction.update(refs[index]!, {
+              name: row.name,
+              importedBy: importer.uid,
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+          } else {
+            transaction.create(refs[index]!, {
+              name: row.name,
+              used: false,
+              importedBy: importer.uid,
+              importedAt: FieldValue.serverTimestamp(),
+            });
+          }
+        });
       });
       await audit.write({
         actorUid: importer.uid,
@@ -192,7 +209,8 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
         if (!prn.exists || prn.get('used') === true) {
           throw new HttpError(403, 'PRN_INVALID', 'PRN is unavailable');
         }
-        if (existing.exists) {
+        const existingPrn = existing.exists ? existing.get('prn') : null;
+        if (existing.exists && existingPrn && existingPrn !== 'Pending') {
           throw new HttpError(409, 'PROFILE_EXISTS', 'Profile already exists');
         }
         transaction.update(prnRef, {
@@ -200,18 +218,30 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
           usedBy: signedIn.uid,
           usedAt: FieldValue.serverTimestamp(),
         });
-        transaction.create(userRef, {
-          name: prn.get('name'),
-          email: authUser?.email ?? null,
-          prn: input.prn,
-          role: 'user',
-          status: 'pending',
-          walletAddress,
-          passkeyRegistered: false,
-          pinSet: false,
-          webAuthnUserId: randomBytes(32).toString('base64url'),
-          createdAt: FieldValue.serverTimestamp(),
-        });
+        if (existing.exists) {
+          transaction.update(userRef, {
+            name: prn.get('name'),
+            email: authUser?.email ?? existing.get('email') ?? null,
+            prn: input.prn,
+            role: 'user',
+            status: 'pending',
+            walletAddress: existing.get('walletAddress') || walletAddress,
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        } else {
+          transaction.create(userRef, {
+            name: prn.get('name'),
+            email: authUser?.email ?? null,
+            prn: input.prn,
+            role: 'user',
+            status: 'pending',
+            walletAddress,
+            passkeyRegistered: false,
+            pinSet: false,
+            webAuthnUserId: randomBytes(32).toString('base64url'),
+            createdAt: FieldValue.serverTimestamp(),
+          });
+        }
       });
       await audit.write({ actorUid: signedIn.uid, action: 'profile.signup', meta: {} });
       response.status(201).json({ status: 'pending' });
