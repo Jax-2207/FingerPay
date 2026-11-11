@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.js';
-import { Clock, RefreshCw, LogOut } from 'lucide-react';
+import { api, formatErrorMessage } from '../api.js';
+import { Clock, RefreshCw, LogOut, Link2, AlertCircle } from 'lucide-react';
 
 export function Pending() {
   const { user, profile, role, loading, refreshProfile, logout } = useAuth();
   const [checking, setChecking] = useState(false);
+  const [linkingPrn, setLinkingPrn] = useState('');
+  const [linkingLoading, setLinkingLoading] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // If the user is an admin or merchant, redirect them immediately to their portal
@@ -39,6 +43,21 @@ export function Pending() {
     }
   };
 
+  const handleLinkPrn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!linkingPrn.trim()) return;
+    setLinkingLoading(true);
+    setLinkError(null);
+    try {
+      await api.signupProfile(linkingPrn.trim());
+      await refreshProfile();
+    } catch (err) {
+      setLinkError(formatErrorMessage(err));
+    } finally {
+      setLinkingLoading(false);
+    }
+  };
+
   const handleLogout = async () => {
     await logout();
     navigate('/login', { replace: true });
@@ -53,19 +72,58 @@ export function Pending() {
 
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">Approval Pending</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Your PRN registration has been received and is waiting for authorization from Campus
-          Accounts.
+          {profile
+            ? 'Your PRN registration has been received and is waiting for authorization from Campus Accounts.'
+            : 'Your account was created, but your Campus PRN was not linked to the university allowlist.'}
         </p>
 
-        <div className="my-6 rounded-xl bg-slate-50 p-4 text-left border border-slate-200">
-          <div className="text-xs text-slate-500 font-medium">REGISTERED PRN</div>
-          <div className="text-base font-bold text-slate-800">{profile?.prn || 'Pending'}</div>
-          <div className="mt-2 text-xs text-slate-500 font-medium">ACCOUNT STATUS</div>
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 mt-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-600"></span>
-            Pending Admin Review
+        {/* If user has no Firestore profile linked yet */}
+        {!profile && (
+          <form
+            onSubmit={handleLinkPrn}
+            className="my-6 text-left space-y-3 rounded-xl bg-slate-50 p-4 border border-slate-200"
+          >
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+              <Link2 className="h-4 w-4 text-blue-600" />
+              <span>Link Your Campus PRN</span>
+            </div>
+            {linkError && (
+              <div className="flex items-center gap-1.5 text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-200">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{linkError}</span>
+              </div>
+            )}
+            <input
+              type="text"
+              required
+              value={linkingPrn}
+              onChange={(e) => setLinkingPrn(e.target.value)}
+              placeholder="e.g. PRN2026006"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs uppercase focus:border-blue-600 focus:outline-none"
+            />
+            <p className="text-[11px] text-slate-500">Free demo PRNs: PRN2026006 to PRN2026010</p>
+            <button
+              type="submit"
+              disabled={linkingLoading}
+              className="w-full rounded-xl bg-slate-900 py-2.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+            >
+              {linkingLoading ? 'Linking PRN...' : 'Submit PRN for Review'}
+            </button>
+          </form>
+        )}
+
+        {/* If profile exists */}
+        {profile && (
+          <div className="my-6 rounded-xl bg-slate-50 p-4 text-left border border-slate-200">
+            <div className="text-xs text-slate-500 font-medium">REGISTERED PRN</div>
+            <div className="text-base font-bold text-slate-800">{profile.prn}</div>
+            <div className="mt-2 text-xs text-slate-500 font-medium">ACCOUNT STATUS</div>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 mt-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-600"></span>
+              Pending Admin Review
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex flex-col gap-3">
           <button

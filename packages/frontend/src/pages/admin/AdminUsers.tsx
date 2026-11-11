@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, formatErrorMessage, type AdminUserRecord } from '../../api.js';
-import { CheckCircle2, XCircle, Search, AlertCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Search, AlertCircle, RefreshCw } from 'lucide-react';
 
 export function AdminUsers() {
   const queryClient = useQueryClient();
@@ -10,7 +10,7 @@ export function AdminUsers() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['admin', 'users', filter],
     queryFn: () => api.getAdminUsers(filter === 'all' ? undefined : filter),
   });
@@ -50,16 +50,28 @@ export function AdminUsers() {
           </p>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, PRN or email..."
-            className="rounded-xl border border-slate-300 pl-9 pr-3.5 py-1.5 text-xs focus:border-slate-900 focus:outline-none w-full sm:w-64"
-          />
+        {/* Controls */}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, PRN or email..."
+              className="rounded-xl border border-slate-300 pl-9 pr-3.5 py-1.5 text-xs focus:border-slate-900 focus:outline-none w-full sm:w-64"
+            />
+          </div>
+
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-xs disabled:opacity-50"
+            title="Refresh list"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
         </div>
       </div>
 
