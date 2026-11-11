@@ -305,19 +305,31 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
     challengeRateLimit,
     ...user,
     requireProfile(db),
-    async (_request, response, next) => {
+    async (request, response, next) => {
       try {
         const signedIn = actor(response);
         const profile = await db.collection('users').doc(signedIn.uid).get();
         if (profile.get('status') !== 'approved')
           throw new HttpError(403, 'ACCOUNT_NOT_APPROVED', 'Account is not approved');
         const keys = await db.collection('passkeys').where('uid', '==', signedIn.uid).get();
+
+        let webAuthnUserId = profile.get('webAuthnUserId');
+        if (typeof webAuthnUserId !== 'string' || !webAuthnUserId) {
+          webAuthnUserId = randomBytes(32).toString('base64url');
+          await db.collection('users').doc(signedIn.uid).update({ webAuthnUserId });
+        }
+
+        const effectiveRpId =
+          request.hostname === '127.0.0.1' || request.headers.host?.includes('127.0.0.1')
+            ? '127.0.0.1'
+            : config.WEBAUTHN_RP_ID;
+
         const options = await generateRegistrationOptions({
           rpName: config.WEBAUTHN_RP_NAME,
-          rpID: config.WEBAUTHN_RP_ID,
-          userName: String(profile.get('prn')),
-          userDisplayName: String(profile.get('name')),
-          userID: Buffer.from(String(profile.get('webAuthnUserId')), 'base64url'),
+          rpID: effectiveRpId,
+          userName: String(profile.get('prn') || signedIn.uid),
+          userDisplayName: String(profile.get('name') || profile.get('prn') || 'Student'),
+          userID: Uint8Array.from(Buffer.from(webAuthnUserId, 'base64url')),
           authenticatorSelection: { residentKey: 'preferred', userVerification: 'required' },
           excludeCredentials: keys.docs.map((doc) => ({
             id: doc.id,
@@ -328,7 +340,7 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
         await db
           .collection('webauthnChallenges')
           .doc(id)
-          .create({
+          .set({
             uid: signedIn.uid,
             challenge: options.challenge,
             purpose: 'registration',
@@ -356,11 +368,20 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
           signedIn.uid,
           'registration',
         );
+        const effectiveRpId =
+          request.hostname === '127.0.0.1' || request.headers.host?.includes('127.0.0.1')
+            ? '127.0.0.1'
+            : config.WEBAUTHN_RP_ID;
+        const expectedOrigins = [
+          config.WEBAUTHN_ORIGIN,
+          'http://localhost:5173',
+          'http://127.0.0.1:5173',
+        ];
         const verified = await verifyRegistrationResponse({
           response: input.response as Parameters<typeof verifyRegistrationResponse>[0]['response'],
           expectedChallenge: challenge.challenge,
-          expectedOrigin: config.WEBAUTHN_ORIGIN,
-          expectedRPID: config.WEBAUTHN_RP_ID,
+          expectedOrigin: expectedOrigins,
+          expectedRPID: [effectiveRpId, config.WEBAUTHN_RP_ID, 'localhost', '127.0.0.1'],
           requireUserVerification: true,
         });
         if (!verified.verified || verified.registrationInfo === undefined)
@@ -400,8 +421,12 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
           : (await db.collection('passkeys').where('uid', '==', profile.id).get()).docs;
       if (profile === undefined || profile.get('status') !== 'approved' || keys.length === 0)
         throw new HttpError(401, 'AUTHENTICATION_FAILED', 'Unable to authenticate');
+      const effectiveRpId =
+        request.hostname === '127.0.0.1' || request.headers.host?.includes('127.0.0.1')
+          ? '127.0.0.1'
+          : config.WEBAUTHN_RP_ID;
       const options = await generateAuthenticationOptions({
-        rpID: config.WEBAUTHN_RP_ID,
+        rpID: effectiveRpId,
         userVerification: 'required',
         allowCredentials: keys.map((doc) => ({
           id: doc.id,
@@ -412,7 +437,7 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
       await db
         .collection('webauthnChallenges')
         .doc(id)
-        .create({
+        .set({
           uid: profile.id,
           challenge: options.challenge,
           purpose: 'authentication',
@@ -450,11 +475,20 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
         counter: Number(key.get('counter')),
         transports: (key.get('transports') as string[] | undefined) ?? [],
       };
+      const effectiveRpId =
+        request.hostname === '127.0.0.1' || request.headers.host?.includes('127.0.0.1')
+          ? '127.0.0.1'
+          : config.WEBAUTHN_RP_ID;
+      const expectedOrigins = [
+        config.WEBAUTHN_ORIGIN,
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+      ];
       const verified = await verifyAuthenticationResponse({
         response: input.response as Parameters<typeof verifyAuthenticationResponse>[0]['response'],
         expectedChallenge: challenge.challenge,
-        expectedOrigin: config.WEBAUTHN_ORIGIN,
-        expectedRPID: config.WEBAUTHN_RP_ID,
+        expectedOrigin: expectedOrigins,
+        expectedRPID: [effectiveRpId, config.WEBAUTHN_RP_ID, 'localhost', '127.0.0.1'],
         credential,
         requireUserVerification: true,
       });

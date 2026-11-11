@@ -27,6 +27,16 @@ export class FirebaseIdTokenVerifier implements IdTokenVerifier {
       }
       role = 'admin';
     }
+    if (!role) {
+      try {
+        const userRecord = await this.auth.getUser(claims.uid);
+        if (userRecord.customClaims?.role) {
+          role = userRecord.customClaims.role;
+        }
+      } catch {
+        // ignore
+      }
+    }
     return { uid: claims.uid, role, authTime: claims.auth_time };
   }
 }
