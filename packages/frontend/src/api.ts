@@ -39,12 +39,15 @@ export function formatErrorMessage(error: unknown): string {
     return FRIENDLY_MESSAGES[error.code] || error.message || 'An unexpected error occurred.';
   }
   if (error instanceof Error) {
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      return 'Cannot connect to FingerPay backend server on http://localhost:4000. Please ensure the backend is running.';
+    }
     return error.message;
   }
   return 'An unexpected error occurred.';
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const token = await auth.currentUser?.getIdToken();
