@@ -19,6 +19,31 @@ function safeHttpError(error: unknown): HttpError {
   if (
     typeof error === 'object' &&
     error !== null &&
+    'statusCode' in error &&
+    'code' in error &&
+    typeof (error as Record<string, unknown>).statusCode === 'number' &&
+    typeof (error as Record<string, unknown>).code === 'string'
+  ) {
+    const errObj = error as Record<string, unknown>;
+    return new HttpError(
+      errObj.statusCode as number,
+      errObj.code as string,
+      typeof errObj.message === 'string' ? errObj.message : 'Request failed',
+    );
+  }
+
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'cause' in error &&
+    error.cause instanceof HttpError
+  ) {
+    return error.cause;
+  }
+
+  if (
+    typeof error === 'object' &&
+    error !== null &&
     'type' in error &&
     error.type === 'entity.too.large'
   ) {
@@ -51,7 +76,12 @@ export function createErrorHandler(logger: Logger): ErrorRequestHandler {
     const safeError = safeHttpError(error);
     if (safeError.statusCode >= 500) {
       logger.error(
-        { requestId: request.id, errorName: error instanceof Error ? error.name : 'UnknownError' },
+        {
+          requestId: request.id,
+          errorName: error instanceof Error ? error.name : 'UnknownError',
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined,
+        },
         'Request failed',
       );
     }

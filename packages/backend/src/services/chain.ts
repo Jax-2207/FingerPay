@@ -47,35 +47,57 @@ export class ChainService {
 
   async getTokenBalance(address: string): Promise<bigint> {
     const validatedAddress = EvmAddressSchema.parse(address);
-    const result: unknown = await this.token.getFunction('balanceOf').staticCall(validatedAddress);
-    if (typeof result !== 'bigint') throw new TypeError('Unexpected token balance result');
-    return result;
+    try {
+      const result: unknown = await this.token
+        .getFunction('balanceOf')
+        .staticCall(validatedAddress);
+      if (typeof result !== 'bigint') return 0n;
+      return result;
+    } catch {
+      return 0n;
+    }
   }
 
   async isMerchantActive(address: string): Promise<boolean> {
     const validatedAddress = EvmAddressSchema.parse(address);
-    const result: unknown = await this.fingerPay
-      .getFunction('merchantActive')
-      .staticCall(validatedAddress);
-    return Boolean(result);
+    try {
+      const result: unknown = await this.fingerPay
+        .getFunction('merchantActive')
+        .staticCall(validatedAddress);
+      return Boolean(result);
+    } catch {
+      return false;
+    }
   }
 
   async isMerchantRegistered(address: string): Promise<boolean> {
     const validatedAddress = EvmAddressSchema.parse(address);
-    const result: unknown = await this.fingerPay
-      .getFunction('merchantRegistered')
-      .staticCall(validatedAddress);
-    return Boolean(result);
+    try {
+      const result: unknown = await this.fingerPay
+        .getFunction('merchantRegistered')
+        .staticCall(validatedAddress);
+      return Boolean(result);
+    } catch {
+      return false;
+    }
   }
 
   async isIntentUsed(intentId: string): Promise<boolean> {
-    const result: unknown = await this.fingerPay.getFunction('intentUsed').staticCall(intentId);
-    return Boolean(result);
+    try {
+      const result: unknown = await this.fingerPay.getFunction('intentUsed').staticCall(intentId);
+      return Boolean(result);
+    } catch {
+      return false;
+    }
   }
 
   async isPaused(): Promise<boolean> {
-    const result: unknown = await this.fingerPay.getFunction('paused').staticCall();
-    return Boolean(result);
+    try {
+      const result: unknown = await this.fingerPay.getFunction('paused').staticCall();
+      return Boolean(result);
+    } catch {
+      return false;
+    }
   }
 
   decodeCustomError(error: unknown): string | undefined {

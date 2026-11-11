@@ -182,16 +182,19 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
     try {
       const input = body(SignupInput, request.body);
       const signedIn = actor(response);
-      const authUser = await auth.getUser(signedIn.uid);
+      const authUser = await auth.getUser(signedIn.uid).catch(() => null);
       const prnRef = db.collection('prnAllowlist').doc(input.prn);
       const userRef = db.collection('users').doc(signedIn.uid);
       const walletAddress = deriveWalletAddress(signedIn.uid, config.WALLET_SALT);
       await db.runTransaction(async (transaction) => {
         const prn = await transaction.get(prnRef);
         const existing = await transaction.get(userRef);
-        if (!prn.exists || prn.get('used') === true)
+        if (!prn.exists || prn.get('used') === true) {
           throw new HttpError(403, 'PRN_INVALID', 'PRN is unavailable');
-        if (existing.exists) throw new HttpError(409, 'PROFILE_EXISTS', 'Profile already exists');
+        }
+        if (existing.exists) {
+          throw new HttpError(409, 'PROFILE_EXISTS', 'Profile already exists');
+        }
         transaction.update(prnRef, {
           used: true,
           usedBy: signedIn.uid,
@@ -199,7 +202,7 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
         });
         transaction.create(userRef, {
           name: prn.get('name'),
-          email: authUser.email ?? null,
+          email: authUser?.email ?? null,
           prn: input.prn,
           role: 'user',
           status: 'pending',
