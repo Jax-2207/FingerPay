@@ -512,6 +512,23 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
     try {
       const signedIn = actor(response);
       const snapshot = await db.collection('users').doc(signedIn.uid).get();
+      if (signedIn.role === 'admin') {
+        const name = snapshot.exists ? snapshot.get('name') : 'Campus Accounts Admin';
+        const email = snapshot.exists ? snapshot.get('email') : 'admin@campus.edu';
+        response.json({
+          uid: signedIn.uid,
+          name,
+          email,
+          prn: 'ADMIN',
+          role: 'admin',
+          status: 'approved',
+          walletAddress: '',
+          balance: '0',
+          passkeyRegistered: true,
+          pinSet: true,
+        });
+        return;
+      }
       if (!snapshot.exists) throw new HttpError(404, 'PROFILE_NOT_FOUND', 'Profile was not found');
       const walletAddress = String(snapshot.get('walletAddress'));
       const balance = await chain.getTokenBalance(walletAddress);

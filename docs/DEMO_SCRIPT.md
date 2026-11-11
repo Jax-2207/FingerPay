@@ -161,3 +161,4 @@ WebAuthn requires a secure context (`https://` or `localhost`). To test on a phy
 2. In desktop Chrome, open `chrome://inspect/#devices`.
 3. Port forward `5173` to `localhost:5173` and `4000` to `localhost:4000`.
 4. Open `http://localhost:5173` on the phone's Chrome browser (Chromium treats `localhost` as a secure context).
+

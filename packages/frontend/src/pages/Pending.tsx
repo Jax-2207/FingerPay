@@ -1,27 +1,47 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.js';
 import { Clock, RefreshCw, LogOut } from 'lucide-react';
 
 export function Pending() {
-  const { profile, refreshProfile, logout } = useAuth();
+  const { user, profile, role, loading, refreshProfile, logout } = useAuth();
   const [checking, setChecking] = useState(false);
   const navigate = useNavigate();
+
+  // If the user is an admin or merchant, redirect them immediately to their portal
+  useEffect(() => {
+    if (role === 'admin') {
+      navigate('/admin', { replace: true });
+    } else if (role === 'merchant') {
+      navigate('/merchant', { replace: true });
+    } else if (!user && !loading) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, role, loading, navigate]);
 
   const handleCheck = async () => {
     setChecking(true);
     try {
       await refreshProfile();
-      if (profile?.status === 'approved') {
+      if (role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else if (role === 'merchant') {
+        navigate('/merchant', { replace: true });
+      } else if (profile?.status === 'approved') {
         if (!profile.passkeyRegistered || !profile.pinSet) {
-          navigate('/onboarding');
+          navigate('/onboarding', { replace: true });
         } else {
-          navigate('/');
+          navigate('/', { replace: true });
         }
       }
     } finally {
       setTimeout(() => setChecking(false), 500);
     }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -58,7 +78,7 @@ export function Pending() {
           </button>
 
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="flex items-center justify-center gap-2 w-full rounded-xl border border-slate-300 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             <LogOut className="h-4 w-4" />

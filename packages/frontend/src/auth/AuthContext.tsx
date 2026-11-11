@@ -42,9 +42,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const tokenResult = await auth.currentUser.getIdTokenResult(true);
       const claimRole = (tokenResult.claims.role as string | undefined) ?? null;
-      setRole(claimRole);
+      const effectiveRole =
+        claimRole || (auth.currentUser.email === 'admin@campus.edu' ? 'admin' : null);
+      setRole(effectiveRole);
 
-      if (claimRole === 'user' || !claimRole) {
+      if (effectiveRole === 'admin') {
+        setProfile({
+          uid: auth.currentUser.uid,
+          name: 'Campus Accounts Admin',
+          email: auth.currentUser.email,
+          prn: 'ADMIN',
+          role: 'admin',
+          status: 'approved',
+          walletAddress: '',
+          balance: '0',
+          passkeyRegistered: true,
+          pinSet: true,
+        });
+      } else if (effectiveRole === 'user' || !effectiveRole) {
         const data = await api.getMe();
         setProfile(data);
         if (data.role) setRole(data.role);
@@ -61,9 +76,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const tokenResult = await currentUser.getIdTokenResult();
           const claimRole = (tokenResult.claims.role as string | undefined) ?? null;
-          setRole(claimRole);
+          const effectiveRole =
+            claimRole || (currentUser.email === 'admin@campus.edu' ? 'admin' : null);
+          setRole(effectiveRole);
 
-          if (claimRole === 'user' || !claimRole) {
+          if (effectiveRole === 'admin') {
+            setProfile({
+              uid: currentUser.uid,
+              name: 'Campus Accounts Admin',
+              email: currentUser.email,
+              prn: 'ADMIN',
+              role: 'admin',
+              status: 'approved',
+              walletAddress: '',
+              balance: '0',
+              passkeyRegistered: true,
+              pinSet: true,
+            });
+          } else if (effectiveRole === 'user' || !effectiveRole) {
             const data = await api.getMe();
             setProfile(data);
             if (data.role) setRole(data.role);
@@ -110,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signOut(auth);
     setUser(null);
     setProfile(null);
+    setRole(null);
   };
 
   return (

@@ -2,7 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.js';
 
 export function ProtectedRoute() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, role, loading } = useAuth();
 
   if (loading) {
     return (
@@ -14,6 +14,14 @@ export function ProtectedRoute() {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (role === 'merchant') {
+    return <Navigate to="/merchant" replace />;
   }
 
   if (!profile || profile.status === 'pending') {

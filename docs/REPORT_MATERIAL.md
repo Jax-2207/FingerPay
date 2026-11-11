@@ -72,3 +72,4 @@ Derived directly from `docs/THREAT_MODEL.md`:
 3. **No In-App Real-Money Ingress/Egress**: CampusCoin (CPC) has no fixed conversion guarantee within the software and cannot be transferred user-to-user or cashed out. External settlement is strictly off-chain.
 4. **Client Display Trust**: While passkeys cryptographically authenticate the client authenticator, the user relies on the client application to display the authentic merchant address and intent amount.
 5. **No Offline Operation**: Payments require network connectivity to verify single-use challenges, Argon2id PIN hashes, and broadcast on-chain transactions.
+
