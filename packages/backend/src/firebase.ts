@@ -40,5 +40,12 @@ export function initializeFirebase(config: AppConfig): FirebaseServices {
           : { credential: applicationDefault() }),
     });
 
-  return { app, auth: getAuth(app), firestore: getFirestore(app) };
+  const firestore = getFirestore(app);
+  try {
+    firestore.settings({ ignoreUndefinedProperties: true });
+  } catch {
+    // settings already initialized
+  }
+
+  return { app, auth: getAuth(app), firestore };
 }
