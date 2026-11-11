@@ -10,12 +10,9 @@ export interface FirebaseServices {
 }
 
 export function initializeFirebase(config: AppConfig): FirebaseServices {
-  if (config.FIREBASE_AUTH_EMULATOR_HOST !== undefined) {
-    process.env.FIREBASE_AUTH_EMULATOR_HOST = config.FIREBASE_AUTH_EMULATOR_HOST;
-  }
-  if (config.FIRESTORE_EMULATOR_HOST !== undefined) {
-    process.env.FIRESTORE_EMULATOR_HOST = config.FIRESTORE_EMULATOR_HOST;
-  }
+  // Ensure emulator variables are cleared so the SDK never diverts to local emulators
+  delete process.env.FIREBASE_AUTH_EMULATOR_HOST;
+  delete process.env.FIRESTORE_EMULATOR_HOST;
 
   const existingApp = getApps().find((app) => app.name === '[DEFAULT]');
   const accountCredential =
@@ -26,18 +23,14 @@ export function initializeFirebase(config: AppConfig): FirebaseServices {
           privateKey: config.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
         })
       : undefined;
-  const usingEmulator =
-    config.FIREBASE_AUTH_EMULATOR_HOST !== undefined ||
-    config.FIRESTORE_EMULATOR_HOST !== undefined;
+
   const app =
     existingApp ??
     initializeApp({
       projectId: config.FIREBASE_PROJECT_ID,
       ...(accountCredential !== undefined
         ? { credential: accountCredential }
-        : usingEmulator
-          ? {}
-          : { credential: applicationDefault() }),
+        : { credential: applicationDefault() }),
     });
 
   const firestore = getFirestore(app);
