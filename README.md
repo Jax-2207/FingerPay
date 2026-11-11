@@ -105,7 +105,7 @@ corepack pnpm --filter @fingerpay/contracts node
 ```
 Terminal 2:
 ```powershell
-corepack pnpm --filter @fingerpay/contracts deploy --network localhost
+corepack pnpm deploy:local
 ```
 
 ### Step 4: Seed Demo Accounts

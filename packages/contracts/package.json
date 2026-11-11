@@ -9,6 +9,7 @@
     "test": "hardhat test test/CampusCoin.hardhat.ts test/FingerPay.hardhat.ts",
     "node": "hardhat node",
     "deploy": "hardhat run scripts/deploy.ts",
+    "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
     "seed": "hardhat run scripts/seed.ts",
     "export-abi": "hardhat run scripts/export-abi.ts"
   },
