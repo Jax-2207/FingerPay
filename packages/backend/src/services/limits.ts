@@ -26,15 +26,34 @@ export class LimitsService {
     const dailyLimit = BigInt(this.config.DAILY_LIMIT_CPC);
     const dayAgo = Timestamp.fromMillis(Date.now() - 24 * 60 * 60 * 1000);
 
-    const snapshot = await this.firestore
-      .collection('transactions')
-      .where('userUid', '==', userUid)
-      .where('status', '==', 'confirmed')
-      .where('createdAt', '>=', dayAgo)
-      .get();
+    let docs: FirebaseFirestore.QueryDocumentSnapshot[];
+    try {
+      const snapshot = await this.firestore
+        .collection('transactions')
+        .where('userUid', '==', userUid)
+        .where('status', '==', 'confirmed')
+        .where('createdAt', '>=', dayAgo)
+        .get();
+      docs = snapshot.docs;
+    } catch {
+      const snapshot = await this.firestore
+        .collection('transactions')
+        .where('userUid', '==', userUid)
+        .get();
+      const dayAgoMillis = dayAgo.toMillis();
+      docs = snapshot.docs.filter((doc) => {
+        if (doc.get('status') !== 'confirmed') return false;
+        const createdAt = doc.get('createdAt');
+        const time =
+          createdAt && typeof (createdAt as { toMillis?: () => number }).toMillis === 'function'
+            ? (createdAt as { toMillis: () => number }).toMillis()
+            : 0;
+        return time >= dayAgoMillis;
+      });
+    }
 
     let spent24h = 0n;
-    for (const doc of snapshot.docs) {
+    for (const doc of docs) {
       const txAmount = doc.get('amount');
       if (typeof txAmount === 'string' || typeof txAmount === 'number') {
         spent24h += BigInt(txAmount);

@@ -880,11 +880,32 @@ export function createPhase4Router(deps: Phase4Dependencies): Router {
         query = query.where('userUid', '==', user.uid) as never;
       }
 
-      const snapshot = await query.orderBy('createdAt', 'desc').limit(limit).get();
-      const transactions = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      let transactions: Array<Record<string, unknown>> = [];
+      try {
+        const snapshot = await query.orderBy('createdAt', 'desc').limit(limit).get();
+        transactions = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+      } catch {
+        // Fall back to in-memory sort if Firestore composite index is missing
+        const snapshot = await query.get();
+        transactions = snapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .sort((a, b) => {
+            const rawA = a as Record<string, unknown>;
+            const rawB = b as Record<string, unknown>;
+            const timeA =
+              (rawA.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0;
+            const timeB =
+              (rawB.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0;
+            return timeB - timeA;
+          })
+          .slice(0, limit);
+      }
 
       response.json({ transactions });
     } catch (error) {
@@ -897,18 +918,35 @@ export function createPhase4Router(deps: Phase4Dependencies): Router {
       const user = actor(response);
       const thirtyDaysAgo = Timestamp.fromMillis(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-      const snapshot = await db
-        .collection('transactions')
-        .where('userUid', '==', user.uid)
-        .where('status', '==', 'confirmed')
-        .where('createdAt', '>=', thirtyDaysAgo)
-        .get();
+      let docs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+      try {
+        const snapshot = await db
+          .collection('transactions')
+          .where('userUid', '==', user.uid)
+          .where('status', '==', 'confirmed')
+          .where('createdAt', '>=', thirtyDaysAgo)
+          .get();
+        docs = snapshot.docs;
+      } catch {
+        // Fall back to in-memory filter if Firestore composite index is missing
+        const snapshot = await db.collection('transactions').where('userUid', '==', user.uid).get();
+        const thirtyDaysAgoMillis = thirtyDaysAgo.toMillis();
+        docs = snapshot.docs.filter((doc) => {
+          if (doc.get('status') !== 'confirmed') return false;
+          const createdAt = doc.get('createdAt');
+          const time =
+            createdAt && typeof (createdAt as { toMillis?: () => number }).toMillis === 'function'
+              ? (createdAt as { toMillis: () => number }).toMillis()
+              : 0;
+          return time >= thirtyDaysAgoMillis;
+        });
+      }
 
       const totalsByCategory: Record<string, number> = {};
       const totalsByDay: Record<string, number> = {};
       let totalSpent = 0;
 
-      for (const doc of snapshot.docs) {
+      for (const doc of docs) {
         const amt = Number(doc.get('amount')) || 0;
         const cat = (doc.get('category') as string | undefined) ?? 'general';
         totalsByCategory[cat] = (totalsByCategory[cat] ?? 0) + amt;

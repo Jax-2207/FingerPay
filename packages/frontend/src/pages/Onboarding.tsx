@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.js';
 import { api, formatErrorMessage } from '../api.js';
@@ -6,12 +6,26 @@ import { registerPasskey } from '../passkey.js';
 import { Fingerprint, KeyRound, AlertCircle } from 'lucide-react';
 
 export function Onboarding() {
-  const { profile, refreshProfile } = useAuth();
+  const { user, profile, role, loading: authLoading, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState<1 | 2>(profile?.passkeyRegistered ? 2 : 1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user && !authLoading) {
+      navigate('/login', { replace: true });
+    } else if (role === 'admin') {
+      navigate('/admin', { replace: true });
+    } else if (role === 'merchant') {
+      navigate('/merchant', { replace: true });
+    } else if (profile?.status === 'pending') {
+      navigate('/pending', { replace: true });
+    } else if (profile?.passkeyRegistered && profile?.pinSet) {
+      navigate('/', { replace: true });
+    }
+  }, [user, role, profile, authLoading, navigate]);
 
   // PIN state
   const [pin, setPin] = useState('');

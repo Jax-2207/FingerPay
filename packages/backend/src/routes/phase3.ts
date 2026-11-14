@@ -316,7 +316,7 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
         let webAuthnUserId = profile.get('webAuthnUserId');
         if (typeof webAuthnUserId !== 'string' || !webAuthnUserId) {
           webAuthnUserId = randomBytes(32).toString('base64url');
-          await db.collection('users').doc(signedIn.uid).update({ webAuthnUserId });
+          await db.collection('users').doc(signedIn.uid).set({ webAuthnUserId }, { merge: true });
         }
 
         const effectiveRpId =
@@ -331,10 +331,12 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
           userDisplayName: String(profile.get('name') || profile.get('prn') || 'Student'),
           userID: Uint8Array.from(Buffer.from(webAuthnUserId, 'base64url')),
           authenticatorSelection: { residentKey: 'preferred', userVerification: 'required' },
-          excludeCredentials: keys.docs.map((doc) => ({
-            id: doc.id,
-            transports: (doc.get('transports') as string[] | undefined) ?? [],
-          })),
+          excludeCredentials: keys.docs
+            .filter((doc) => /^[A-Za-z0-9_-]+$/.test(doc.id))
+            .map((doc) => ({
+              id: doc.id,
+              transports: (doc.get('transports') as string[] | undefined) ?? [],
+            })),
         });
         const id = challengeId();
         await db
@@ -349,6 +351,7 @@ export function createPhase3Router(deps: Phase3Dependencies): Router {
           });
         response.json({ challengeId: id, options });
       } catch (error) {
+        console.error('CRITICAL: /passkey/register/options failed with error:', error);
         next(error);
       }
     },

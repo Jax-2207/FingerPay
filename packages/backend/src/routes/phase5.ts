@@ -230,17 +230,40 @@ export function createPhase5Router(deps: Phase5Dependencies): Router {
   router.get('/settlements', ...merchantOnly, async (_request, response, next) => {
     try {
       const caller = actor(response);
-      const snapshot = await db
-        .collection('settlements')
-        .where('merchantUid', '==', caller.uid)
-        .orderBy('requestedAt', 'desc')
-        .limit(100)
-        .get();
-
-      const settlements = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      let settlements: Array<Record<string, unknown>> = [];
+      try {
+        const snapshot = await db
+          .collection('settlements')
+          .where('merchantUid', '==', caller.uid)
+          .orderBy('requestedAt', 'desc')
+          .limit(100)
+          .get();
+        settlements = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+      } catch {
+        // Fall back to in-memory sort if Firestore composite index is missing
+        const snapshot = await db
+          .collection('settlements')
+          .where('merchantUid', '==', caller.uid)
+          .get();
+        settlements = snapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .sort((a, b) => {
+            const rawA = a as Record<string, unknown>;
+            const rawB = b as Record<string, unknown>;
+            const timeA =
+              (rawA.requestedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0;
+            const timeB =
+              (rawB.requestedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0;
+            return timeB - timeA;
+          })
+          .slice(0, 100);
+      }
 
       response.json({ settlements });
     } catch (error) {

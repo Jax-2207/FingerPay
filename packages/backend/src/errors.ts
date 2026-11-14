@@ -63,7 +63,8 @@ function safeHttpError(error: unknown): HttpError {
     );
   }
 
-  return new HttpError(500, API_ERROR_CODES.internal, 'Internal server error');
+  const message = error instanceof Error && error.message ? error.message : 'Internal server error';
+  return new HttpError(500, API_ERROR_CODES.internal, message);
 }
 
 export function createErrorHandler(logger: Logger): ErrorRequestHandler {
