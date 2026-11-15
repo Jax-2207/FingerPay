@@ -17,13 +17,19 @@ import { computeIntentId } from '@fingerpay/shared';
 
 vi.mock('@simplewebauthn/server', () => ({
   generateAuthenticationOptions: vi.fn(async ({ challenge }) => ({
-    challenge: typeof challenge === 'string' ? challenge : 'mock-auth-challenge',
+    challenge: Buffer.from(challenge).toString('base64url'),
     rpId: 'localhost',
     allowCredentials: [],
   })),
-  verifyAuthenticationResponse: vi.fn(async ({ response }) => {
-    const raw = response as { id?: string; clientDataJSON?: string };
-    if (raw?.clientDataJSON === 'fail') {
+  verifyAuthenticationResponse: vi.fn(async ({ response, expectedChallenge }) => {
+    const raw = response as {
+      id?: string;
+      response?: { clientDataJSON?: string; challenge?: string };
+    };
+    if (
+      raw?.response?.clientDataJSON === 'fail' ||
+      (raw?.response?.challenge !== undefined && raw.response.challenge !== expectedChallenge)
+    ) {
       return { verified: false };
     }
     return {
@@ -253,8 +259,8 @@ const phase8Suite = describe.skipIf(emulator === undefined)(
     }
 
     // Helper to fetch challenge
-    async function fetchChallenge(studentUid: string, intentId: string) {
-      const res = await fetch(`${baseUrl}/api/intents/${intentId}/auth-options`, {
+    async function fetchChallenge(studentUid: string, intentId: string, origin = baseUrl) {
+      const res = await fetch(`${origin}/api/intents/${intentId}/auth-options`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -324,6 +330,55 @@ const phase8Suite = describe.skipIf(emulator === undefined)(
         expect(replayNewRes.status).toBe(400);
         const replayNewData = await replayNewRes.json();
         expect(replayNewData.error.code).toBe('CHALLENGE_EXPIRED');
+      });
+
+      it('rejects a prior attempt assertion when the student retries the same intent', async () => {
+        const student = await seedStudent('student-retry-replay');
+        const merchant = await seedMerchant('merchant-retry-replay');
+        const intent = await createValidIntent(merchant.uid, 15);
+        // Use IPv6 loopback so this replay check has an isolated IPv6 rate-limit bucket.
+        const retryServer = app.listen(0, '::1');
+        await new Promise<void>((resolve, reject) => {
+          retryServer.once('listening', resolve);
+          retryServer.once('error', reject);
+        });
+        try {
+          const address = retryServer.address();
+          if (address === null || typeof address === 'string') {
+            throw new Error('Could not read the retry test server address');
+          }
+          const retryBaseUrl = `http://[::1]:${address.port}`;
+          const firstAttempt = await fetchChallenge(student.uid, intent.intentId, retryBaseUrl);
+          const secondAttempt = await fetchChallenge(student.uid, intent.intentId, retryBaseUrl);
+
+          expect(firstAttempt.options.challenge).not.toBe(secondAttempt.options.challenge);
+
+          const payCallsBefore = relayerPayCalls.length;
+          const replayRes = await fetch(`${retryBaseUrl}/api/intents/${intent.intentId}/confirm`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${student.uid}`,
+            },
+            body: JSON.stringify({
+              challengeId: secondAttempt.challengeId,
+              pin: '4321',
+              assertion: {
+                id: `key-${student.uid}`,
+                response: { clientDataJSON: 'ok', challenge: firstAttempt.options.challenge },
+              },
+            }),
+          });
+
+          expect(replayRes.status).toBe(401);
+          const replayData = await replayRes.json();
+          expect(replayData.error.code).toBe('AUTHENTICATION_FAILED');
+          expect(relayerPayCalls).toHaveLength(payCallsBefore);
+        } finally {
+          await new Promise<void>((resolve, reject) => {
+            retryServer.close((error) => (error ? reject(error) : resolve()));
+          });
+        }
       });
 
       it('rejects cross-intent challenge reuse', async () => {

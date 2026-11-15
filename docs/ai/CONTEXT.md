@@ -30,6 +30,10 @@ Phases 0, 1, 2, 3, 4, 5, 6, 7, 8, and 9 are complete and signed off. Phase 10 op
 
 Agentic workflow/configuration, Phase 0 tooling, Phase 1 smart contracts, Phase 2 shared schemas/backend foundation, Phase 3 student onboarding/passkeys/PIN, Phase 4 merchant management, minting, payment authorization pipeline, blockchain indexer, Phase 5 payment refunds, merchant settlement, emergency circuit breaker, admin audit logging, Phase 6 student frontend PWA, Phase 7 merchant portal and admin console, Phase 8 security hardening, unified PIN lockout, atomic challenge consumption, and full threat model validation, and Phase 9 deployment records (`deployments/`), demo seed automation (`scripts/demo-seed.mjs`), `docs/DEMO_SCRIPT.md`, `docs/REPORT_MATERIAL.md`, and complete `README.md` exist and are verified. Canonical architecture and security assessment are in `docs/THREAT_MODEL.md`.
 
+## Verified follow-up (2026-11-15)
+
+Payment WebAuthn challenges use fresh cryptographically random 32-byte values per attempt and are bound to the user, intent, purpose, and expiry in the atomic challenge record. The `/scan` page supports camera scan, local QR image decoding (maximum 10 MiB, no file upload), and manual intent entry. Verification evidence is recorded in `docs/PROGRESS.md` and `docs/features/payment-challenge-correctness/` and `docs/features/qr-image-upload/`.
+
 ## Canonical references
 
 - Technical specification: `docs/BUILD_GUIDE.md`

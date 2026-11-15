@@ -18,7 +18,7 @@ import type { ChainService } from '../src/services/chain.js';
 
 vi.mock('@simplewebauthn/server', () => ({
   generateAuthenticationOptions: vi.fn(async ({ challenge }) => ({
-    challenge: typeof challenge === 'string' ? challenge : 'mock-auth-challenge',
+    challenge: Buffer.from(challenge).toString('base64url'),
     rpId: 'localhost',
     allowCredentials: [],
   })),
@@ -429,17 +429,23 @@ const phase4Suite = describe.skipIf(emulator === undefined)(
         expect(fetched.amount).toBe('45');
         expect(fetched.status).toBe('created');
 
-        // 3. Student requests auth options (challenge bound to intent hash)
+        // 3. Each auth-options request receives a fresh canonical challenge.
+        const firstOptionsRes = await fetch(`${baseUrl}/intents/${intent.intentId}/auth-options`, {
+          method: 'POST',
+          headers: { authorization: `Bearer ${studentUid}` },
+        });
+        expect(firstOptionsRes.status).toBe(200);
+        const firstOptions = await firstOptionsRes.json();
         const optRes = await fetch(`${baseUrl}/intents/${intent.intentId}/auth-options`, {
           method: 'POST',
           headers: { authorization: `Bearer ${studentUid}` },
         });
         expect(optRes.status).toBe(200);
         const { challengeId, options } = await optRes.json();
-        const expectedChallenge = Buffer.from(intent.intentId.slice(2), 'hex').toString(
-          'base64url',
-        );
-        expect(options.challenge).toBe(expectedChallenge);
+        const decodedChallenge = Buffer.from(options.challenge, 'base64url');
+        expect(decodedChallenge.byteLength).toBe(32);
+        expect(decodedChallenge.toString('base64url')).toBe(options.challenge);
+        expect(options.challenge).not.toBe(firstOptions.options.challenge);
 
         // 4. Student confirms payment
         const confirmRes = await fetch(`${baseUrl}/intents/${intent.intentId}/confirm`, {

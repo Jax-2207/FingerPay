@@ -1,14 +1,18 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
-import { AlertCircle, Camera, ArrowRight, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Camera, ArrowRight, ArrowLeft, Image as ImageIcon } from 'lucide-react';
+
+const MAX_QR_IMAGE_BYTES = 10 * 1024 * 1024;
 
 export function Scan() {
   const navigate = useNavigate();
   const [manualInput, setManualInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [imageScanning, setImageScanning] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   const extractIntentId = (raw: string): string | null => {
     const trimmed = raw.trim();
@@ -28,12 +32,11 @@ export function Scan() {
     // Query parameter containing ?intentId=... or ?id=...
     const urlMatch = trimmed.match(/[?&](?:intentId|id)=([^&#]+)/);
     if (urlMatch && urlMatch[1]) {
-      return decodeURIComponent(urlMatch[1]);
-    }
-
-    // Standard string fallback if length is sufficient
-    if (trimmed.length >= 8 && !trimmed.includes(' ')) {
-      return trimmed;
+      try {
+        return decodeURIComponent(urlMatch[1]);
+      } catch {
+        return null;
+      }
     }
 
     return null;
@@ -59,6 +62,34 @@ export function Scan() {
       navigate(`/pay/${encodeURIComponent(id)}`);
     } else {
       setError('Please enter a valid payment intent ID or payment URL.');
+    }
+  };
+
+  const handleImageSelected = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    setError(null);
+    if (file.size > MAX_QR_IMAGE_BYTES) {
+      setError('Choose a QR image smaller than 10 MiB.');
+      return;
+    }
+    if (file.type && !file.type.startsWith('image/')) {
+      setError('Choose an image file containing a FingerPay payment QR code.');
+      return;
+    }
+
+    setImageScanning(true);
+    try {
+      const imageScanner = new Html5Qrcode('qr-file-reader');
+      const decodedText = await imageScanner.scanFile(file, false);
+      handleScanSuccess(decodedText);
+    } catch {
+      setError('Could not read a QR code from that image. Try another image or use manual entry.');
+    } finally {
+      setImageScanning(false);
     }
   };
 
@@ -119,10 +150,40 @@ export function Scan() {
             <Camera className="h-12 w-12 text-slate-400 mb-2" />
             <div className="text-sm font-semibold">Camera scanner unavailable</div>
             <p className="mt-1 text-xs text-slate-400">
-              Camera access is restricted or not supported in this environment. Use manual entry
-              below.
+              Camera access is restricted or not supported in this environment. Choose a QR image or
+              use manual entry below.
             </p>
           </div>
+        )}
+      </div>
+
+      <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
+        <h3 className="text-sm font-bold text-slate-900 mb-1">Use a QR image</h3>
+        <p className="text-xs text-slate-500 mb-3">
+          Choose a saved QR image. It is scanned on this device and is not uploaded.
+        </p>
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          aria-label="Choose a QR image"
+          className="sr-only"
+          onChange={handleImageSelected}
+        />
+        <button
+          type="button"
+          onClick={() => imageInputRef.current?.click()}
+          disabled={imageScanning}
+          className="flex items-center justify-center gap-2 w-full rounded-xl border border-blue-200 bg-blue-50 py-2.5 text-sm font-semibold text-blue-800 transition hover:bg-blue-100 disabled:cursor-wait disabled:opacity-60"
+        >
+          <ImageIcon className="h-4 w-4" />
+          <span>{imageScanning ? 'Reading QR image…' : 'Choose QR image'}</span>
+        </button>
+        <div id="qr-file-reader" className="hidden" aria-hidden="true"></div>
+        {imageScanning && (
+          <p role="status" className="mt-2 text-center text-xs text-slate-500">
+            Scanning image on this device…
+          </p>
         )}
       </div>
 

@@ -129,3 +129,28 @@ Reject `mint(to, amount, receiptRef)` when `amount == 0` with `ZeroAmount`. The 
 
 - Every successful `Minted` event corresponds to a positive CPC supply increase.
 - Tests must assert the zero amount revert and verify no state change or `Minted` event.
+
+### ADR-0004: Fresh per-attempt payment WebAuthn challenges
+
+- Status: ACCEPTED
+- Date: 2026-11-15
+- Feature: F-004 payment challenge correctness
+
+#### Context
+
+SimpleWebAuthn base64url-encodes byte input and treats string input as UTF-8. Passing an already encoded challenge string therefore encoded it a second time and caused payment verification to reject a legitimate assertion. Reusing an intent-derived challenge across retries also allowed an assertion from an earlier attempt to match a later challenge record for the same unpaid intent.
+
+#### Options
+
+1. Continue deriving challenge bytes from the intent ID and pass raw bytes; this fixes encoding but reuses the same challenge across retries.
+2. Generate fresh cryptographically random bytes for every authorization attempt, while retaining intent binding in the server-side challenge record.
+
+#### Decision
+
+Use option 2. Generate 32 random bytes per auth-options request, pass those bytes to SimpleWebAuthn, and persist only its returned base64url challenge with the authenticated UID, exact intent ID, payment purpose, and expiry. Confirm atomically consumes that record and verifies the assertion against its exact stored challenge. The user approved this design on 2026-11-15.
+
+#### Consequences
+
+- Retries for an unpaid intent receive different WebAuthn challenges, preventing assertions from one attempt from authorizing a later attempt.
+- Intent binding is enforced by the atomic server-side UID/intent/purpose/expiry metadata checks rather than by deriving challenge bytes from the intent hash.
+- Tests must check the canonical 32-byte encoding, fresh challenges per retry, and rejection of a prior attempt's assertion while preserving existing origin, RP ID, credential ownership, UV, expiry, and one-time-use protections.

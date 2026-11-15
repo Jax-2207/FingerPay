@@ -1,13 +1,24 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { api, formatErrorMessage, type PaymentIntentDetails } from '../../api.js';
-import { QrCode, Clock, CheckCircle2, AlertCircle, XCircle, RotateCcw, Store } from 'lucide-react';
+import {
+  QrCode,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  XCircle,
+  RotateCcw,
+  Store,
+  Copy,
+  Check,
+} from 'lucide-react';
 
 export function MerchantTerminal() {
   const [amount, setAmount] = useState<string>('');
   const [category, setCategory] = useState<string>('canteen');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copiedUrl, setCopiedUrl] = useState(false);
 
   // Active intent state
   const [activeIntent, setActiveIntent] = useState<PaymentIntentDetails | null>(null);
@@ -91,6 +102,7 @@ export function MerchantTerminal() {
         status: 'created',
       });
       setConfirmed(false);
+      setCopiedUrl(false);
     } catch (err) {
       setError(formatErrorMessage(err));
     } finally {
@@ -121,6 +133,16 @@ export function MerchantTerminal() {
   const fullPaymentUrl = activeIntent
     ? `${window.location.origin}/pay/${encodeURIComponent(activeIntent.id)}`
     : '';
+
+  const handleCopyPaymentUrl = async () => {
+    setError(null);
+    try {
+      await navigator.clipboard.writeText(fullPaymentUrl);
+      setCopiedUrl(true);
+    } catch {
+      setError('Could not copy the link. Select and copy the payment URL below.');
+    }
+  };
 
   return (
     <div className="max-w-xl mx-auto space-y-4">
@@ -185,8 +207,27 @@ export function MerchantTerminal() {
             <QRCodeSVG value={fullPaymentUrl} size={220} level="M" />
           </div>
 
+          <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-left">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              Payment URL
+            </div>
+            <div className="break-all font-mono text-xs text-slate-700">{fullPaymentUrl}</div>
+            <button
+              type="button"
+              onClick={handleCopyPaymentUrl}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              {copiedUrl ? (
+                <Check className="h-4 w-4 text-emerald-600" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              <span>{copiedUrl ? 'Copied!' : 'Copy payment URL'}</span>
+            </button>
+          </div>
+
           <p className="text-xs text-slate-500">
-            Ask student to scan this QR code with their FingerPay app
+            Ask student to scan this QR code with their FingerPay app, or share the copied URL
           </p>
 
           {/* Terminal Actions */}

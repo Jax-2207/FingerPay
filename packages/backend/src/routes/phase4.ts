@@ -583,7 +583,7 @@ export function createPhase4Router(deps: Phase4Dependencies): Router {
         throw new HttpError(400, 'PASSKEY_REQUIRED', 'No passkey registered for user');
       }
 
-      const challenge = Buffer.from(intent.intentId.slice(2), 'hex').toString('base64url');
+      const challenge = randomBytes(32);
 
       const options = await generateAuthenticationOptions({
         rpID: config.WEBAUTHN_RP_ID,
@@ -662,7 +662,7 @@ export function createPhase4Router(deps: Phase4Dependencies): Router {
         const student = studentDoc.data()!;
 
         // 5. Verify explicit user approval & WebAuthn assertion
-        // 6. Atomically consume challenge bound to exact payment intent hash
+        // 6. Atomically consume the per-attempt challenge bound to this student and intent
         const challengeRef = db.collection('webauthnChallenges').doc(input.challengeId);
         const challengeData = await db.runTransaction(async (transaction) => {
           const challengeSnap = await transaction.get(challengeRef);
@@ -693,13 +693,6 @@ export function createPhase4Router(deps: Phase4Dependencies): Router {
           transaction.delete(challengeRef);
           return data;
         });
-
-        const expectedIntentChallenge = Buffer.from(intent.intentId.slice(2), 'hex').toString(
-          'base64url',
-        );
-        if (challengeData.challenge !== expectedIntentChallenge) {
-          throw new HttpError(400, 'CHALLENGE_MISMATCH', 'Challenge hash mismatch');
-        }
 
         // 7. Validate challenge, origin, RP ID, user verification, and counter
         const assertion = input.assertion as { id?: string; response?: unknown };

@@ -100,7 +100,7 @@ Role assignment is controlled by backend-verified Firebase custom claims. A user
 1. Merchant enters an amount. Backend creates a payment intent with a cryptographically random nonce and a two-minute expiry.
 2. Backend returns a short intent URL for a QR code.
 3. Student scans the QR. The app fetches the intent and displays merchant name and exact amount.
-4. Student taps Pay. The app requests WebAuthn authentication options whose challenge is bound to the exact intent identifier/hash.
+4. Student taps Pay. The app requests WebAuthn authentication options with a fresh random 32-byte challenge. The backend stores the exact challenge in a short-lived, single-use record bound to the student, payment intent, purpose, and expiry; the intent binding is checked atomically when the challenge is consumed.
 5. Student approves using device user verification (for example fingerprint).
 6. Student enters the application PIN.
 7. App sends `{ assertion, pin }` to the backend.
@@ -354,7 +354,7 @@ Role comes from verified Firebase custom claims.
 | `POST /merchant/apply` | any signed-in | Apply to become merchant |
 | `POST /intents` | merchant, approved | Create payment intent `{ amount }` |
 | `GET /intents/:id` | user or merchant | Intent details for payment confirmation |
-| `POST /intents/:id/auth-options` | user | WebAuthn authentication options with challenge bound to intent ID |
+| `POST /intents/:id/auth-options` | user | WebAuthn authentication options with a fresh challenge stored against the user and intent |
 | `POST /intents/:id/confirm` | user | Body `{ assertion, pin }`; verify pipeline and submit to chain |
 | `POST /intents/:id/cancel` | merchant | Cancel unpaid intent |
 | `GET /history` | user, merchant | Paginated transactions |
@@ -376,7 +376,7 @@ Role comes from verified Firebase custom claims.
 
 1. Load intent. Require status `created`, not expired, and caller must not be the merchant.
 2. Check user is `approved`, has a passkey and PIN set, and is not locked.
-3. Verify WebAuthn assertion against stored credential. Expected challenge must be the exact intent hash/identifier; expected origin and rpID come from environment; require user verification. Reject non-increasing authenticator counters where the authenticator uses counters, while handling authenticators that legitimately report zero counters according to library guidance.
+3. Atomically consume the short-lived WebAuthn challenge record, requiring its user, intent ID, payment purpose, and expiry to match. Verify the assertion against that record's exact challenge and the caller's stored credential. Expected origin and rpID come from environment; require user verification. Reject non-increasing authenticator counters where the authenticator uses counters, while handling authenticators that legitimately report zero counters according to library guidance.
 4. Verify PIN with Argon2id. On failure increment `failedAttempts`. After five failures, lock for 15 minutes. On success reset failure state.
 5. Check chain balance, per-payment limit (default 200 CPC), and rolling 24-hour daily limit (default 500 CPC), configurable through environment.
 6. In a Firestore transaction, move intent `created → approved`; this claims the intent and prevents concurrent double submission.
@@ -384,7 +384,7 @@ Role comes from verified Firebase custom claims.
 8. On success set `confirmed` and write transaction history. On revert set `failed` with a mapped reason. Handle uncertain RPC outcomes safely; do not blindly resubmit a possibly mined transaction.
 9. Write an audit log entry. Never log PIN or assertion contents.
 
-The contract's `computeIntentId` includes chain ID and contract address. The backend's shared intent computation and WebAuthn challenge encoding must be explicitly cross-tested against the deployed local contract. Keep one canonical byte encoding across frontend, backend, and contract; document any implementation detail needed to make the challenge exactly match.
+The contract's `computeIntentId` includes chain ID and contract address. Cross-test the backend's shared intent computation against the deployed local contract. For payment WebAuthn, pass fresh raw random challenge bytes to SimpleWebAuthn and store the library's returned base64url challenge exactly once; do not derive WebAuthn challenges from the intent hash.
 
 ### Rate limits
 
@@ -401,7 +401,7 @@ The contract's `computeIntentId` includes chain ID and contract address. The bac
 | `/pending` | user | Waiting for admin approval |
 | `/onboarding` | user | Step 1 register passkey; step 2 set PIN |
 | `/` | user | Dashboard, balance read from chain, recent transactions, Scan button |
-| `/scan` | user | Camera QR scanner |
+| `/scan` | user | Camera QR scanner, optional on-device QR image chooser, and manual intent entry |
 | `/pay/:intentId` | user | Merchant and amount, Pay button, fingerprint/passkey prompt, PIN pad, result |
 | `/history` | user | Paginated history and chain explorer links |
 | `/analytics` | user | Recharts spending by category and day |
@@ -611,7 +611,7 @@ Implement one phase at a time. The agentic workflow governs how each phase is pl
 
 ### Codex prompt
 
-> Implement Phase 4 from `docs/BUILD_GUIDE.md` (B3, B7, B10, and Phase 4 tasks). Build merchant onboarding, admin mint, payment intents, strict confirm pipeline (WebAuthn challenge bound to exact intent, then PIN, limits, Firestore claim transaction, then relayer `pay`), event indexer with backfill, expiry sweeper, history, and spending analytics. Add happy-path and every listed rejection test, including concurrent double-confirm. Follow the agentic workflow and commit/tag `phase-4` only after all gates pass.
+> Implement Phase 4 from `docs/BUILD_GUIDE.md` (B3, B7, B10, and Phase 4 tasks). Build merchant onboarding, admin mint, payment intents, strict confirm pipeline (fresh WebAuthn challenge bound through an atomic server-side record to the exact student and intent, then PIN, limits, Firestore claim transaction, then relayer `pay`), event indexer with backfill, expiry sweeper, history, and spending analytics. Add happy-path and every listed rejection test, including concurrent double-confirm. Follow the agentic workflow and commit/tag `phase-4` only after all gates pass.
 
 ## Phase 5 — Refunds, settlements, and circuit breaker
 
@@ -654,7 +654,7 @@ With backend, emulators, and local chain running, a UI-created student can onboa
 
 ### Codex prompt
 
-> Implement Phase 6 from `docs/BUILD_GUIDE.md` (B5, B10, B11, and Phase 6 tasks). Build the React/Vite/Tailwind student PWA: auth, role guards, signup with PRN, passkey/PIN onboarding, dashboard, QR scanner, payment screen, history, and Recharts analytics. Use TanStack Query and typed shared schemas. Handle loading, empty, and error states. Add guard and API error-mapping tests. Follow the agentic workflow and commit/tag `phase-6` only after all gates pass.
+> Implement Phase 6 from `docs/BUILD_GUIDE.md` (B5, B10, B11, and Phase 6 tasks). Build the React/Vite/Tailwind student PWA: auth, role guards, signup with PRN, passkey/PIN onboarding, dashboard, camera and local-image QR scanning with manual intent fallback, payment screen, history, and Recharts analytics. Use TanStack Query and typed shared schemas. Handle loading, empty, and error states. Add guard and API error-mapping tests. Follow the agentic workflow and commit/tag `phase-6` only after all gates pass.
 
 ## Phase 7 — Merchant and admin frontends
 

@@ -26,3 +26,5 @@ This backlog follows `docs/BUILD_GUIDE.md` Part D. Phase status reflects complet
 - DOC-001 architecture documentation reconciliation (documentation only; see `docs/PROGRESS.md` and `docs/ai/CHANGES.md`).
 - Phase 0 repository/tooling/CI scaffolding and verification (no product functionality; see `docs/features/phase-0-repository/06-signoff.md`).
 - Phase 1 CampusCoin/FingerPay contracts, tests, scripts, ABI export and verification (see `docs/features/phase-1-smart-contracts/06-signoff.md`).
+- F-004 per-attempt payment WebAuthn challenge correction and replay regression tests (see `docs/features/payment-challenge-correctness/06-signoff.md`).
+- F-003 on-device QR image scanning on `/scan` (see `docs/features/qr-image-upload/06-signoff.md`).
